@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production and build outputs
+dist/
+build/
+out/
+.next/
+.vercel/
+
+# Environment files and credentials
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Editor and OS system files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Heavy media, video dumps, extracted frames, and scratch experiments
+*.mp4
+*.mov
+*.avi
+*.zip
+public/hero-frames/*.webp
+optimized_frames/
+extracted_frames/
+scratch/
+scratch_*/
+scratch_*.*
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

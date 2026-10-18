@@ -1,0 +1,120 @@
+/**
+ * VILLEXA LUXURY DESIGN TOKENS
+ * Refined architectural neutral palette with brushed brass accents
+ * Smoked & Frosted Glassmorphism Design System
+ */
+
+:root {
+  /* Color Palette - Neutrals & Atelier Stones */
+  --color-bg-primary: #12100e;
+  --color-bg-secondary: #1a1614;
+  --color-bg-tertiary: #24201c;
+  --color-bg-surface: rgba(28, 24, 21, 0.75);
+  --color-bg-surface-elevated: rgba(36, 31, 27, 0.88);
+  
+  /* Text & Inks (High-Contrast for Dark Cinematic Architecture) */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.82);
+  --color-text-muted: rgba(255, 255, 255, 0.55);
+  --color-text-inverse: #141210;
+
+  /* Architectural Accents */
+  --color-accent-gold: #c5a059;
+  --color-accent-gold-hover: #d4af73;
+  --color-accent-gold-light: #e6c88b;
+  --color-accent-gold-soft: rgba(197, 160, 89, 0.16);
+  --color-accent-bronze: #3b3228;
+  
+  /* Borders & Dividers */
+  --color-border-subtle: rgba(255, 255, 255, 0.12);
+  --color-border-medium: rgba(255, 255, 255, 0.22);
+  --color-border-dark: rgba(255, 255, 255, 0.08);
+
+  /* Dark Theme Surfaces (for Hero / Footers / Modals) */
+  --color-dark-bg: #12100e;
+  --color-dark-surface: #1a1714;
+  --color-dark-border: rgba(255, 255, 255, 0.12);
+  --color-dark-text-primary: #ffffff;
+  --color-dark-text-secondary: rgba(255, 255, 255, 0.78);
+
+  /* Typography */
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Spacing Scale */
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  --space-20: 5rem;     /* 80px */
+  --space-24: 6rem;     /* 96px */
+  --space-32: 8rem;     /* 128px */
+
+  /* Radii matching reference image */
+  --radius-none: 0px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 9999px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.35);
+  --shadow-card: 0 16px 36px -8px rgba(0, 0, 0, 0.55);
+  --shadow-elevated: 0 24px 48px -12px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 28px rgba(197, 160, 89, 0.28);
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-normal: 250ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-slow: 450ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layout Max-Widths */
+  --container-max: 1400px;
+  --container-narrow: 960px;
+
+  /* Glassmorphism Luxury Showroom Tokens */
+  --glass-bg-primary: rgba(22, 19, 16, 0.65);
+  --glass-bg-surface: rgba(26, 22, 19, 0.68);
+  --glass-bg-surface-elevated: rgba(34, 29, 25, 0.82);
+  --glass-bg-subtle: rgba(255, 255, 255, 0.06);
+  --glass-bg-dark: rgba(18, 15, 13, 0.78);
+  --glass-bg-dark-elevated: rgba(24, 20, 17, 0.90);
+  --glass-bg-pill: rgba(255, 255, 255, 0.08);
+  --glass-bg-pill-hover: rgba(255, 255, 255, 0.14);
+
+  --glass-border-subtle: rgba(255, 255, 255, 0.14);
+  --glass-border-medium: rgba(255, 255, 255, 0.24);
+  --glass-border-dark: rgba(255, 255, 255, 0.08);
+  --glass-border-gold: rgba(197, 160, 89, 0.38);
+
+  --glass-blur-xs: 6px;
+  --glass-blur-sm: 12px;
+  --glass-blur-md: 20px;
+  --glass-blur-lg: 28px;
+  --glass-blur-xl: 40px;
+
+  --glass-shadow-sm: 0 8px 24px -4px rgba(0, 0, 0, 0.45);
+  --glass-shadow-md: 0 16px 36px -8px rgba(0, 0, 0, 0.60);
+  --glass-shadow-lg: 0 28px 56px -12px rgba(0, 0, 0, 0.75);
+
+  --glass-inner-highlight: inset 0 1px 1px 0 rgba(255, 255, 255, 0.30), inset 0 0 24px 0 rgba(255, 255, 255, 0.02);
+  --glass-gold-glow: inset 0 1px 1px 0 rgba(230, 200, 139, 0.45), 0 0 24px rgba(197, 160, 89, 0.20);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

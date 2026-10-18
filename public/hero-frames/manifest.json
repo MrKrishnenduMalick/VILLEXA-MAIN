@@ -1,0 +1,2318 @@
+{
+  "version": "1.0.0",
+  "title": "Villexa Cinematic Architecture Showroom",
+  "frameCount": 384,
+  "width": 1600,
+  "height": 900,
+  "format": "image/webp",
+  "totalSizeBytes": 40199840,
+  "firstFrame": "/hero-frames/frame-00001.webp",
+  "finalFrame": "/hero-frames/frame-00384.webp",
+  "framePattern": "/hero-frames/frame-{index}.webp",
+  "frames": [
+    {
+      "index": 1,
+      "fileName": "frame-00001.webp",
+      "path": "/hero-frames/frame-00001.webp",
+      "size": 134746
+    },
+    {
+      "index": 2,
+      "fileName": "frame-00002.webp",
+      "path": "/hero-frames/frame-00002.webp",
+      "size": 134540
+    },
+    {
+      "index": 3,
+      "fileName": "frame-00003.webp",
+      "path": "/hero-frames/frame-00003.webp",
+      "size": 137422
+    },
+    {
+      "index": 4,
+      "fileName": "frame-00004.webp",
+      "path": "/hero-frames/frame-00004.webp",
+      "size": 139076
+    },
+    {
+      "index": 5,
+      "fileName": "frame-00005.webp",
+      "path": "/hero-frames/frame-00005.webp",
+      "size": 142910
+    },
+    {
+      "index": 6,
+      "fileName": "frame-00006.webp",
+      "path": "/hero-frames/frame-00006.webp",
+      "size": 140304
+    },
+    {
+      "index": 7,
+      "fileName": "frame-00007.webp",
+      "path": "/hero-frames/frame-00007.webp",
+      "size": 138196
+    },
+    {
+      "index": 8,
+      "fileName": "frame-00008.webp",
+      "path": "/hero-frames/frame-00008.webp",
+      "size": 137074
+    },
+    {
+      "index": 9,
+      "fileName": "frame-00009.webp",
+      "path": "/hero-frames/frame-00009.webp",
+      "size": 137148
+    },
+    {
+      "index": 10,
+      "fileName": "frame-00010.webp",
+      "path": "/hero-frames/frame-00010.webp",
+      "size": 134502
+    },
+    {
+      "index": 11,
+      "fileName": "frame-00011.webp",
+      "path": "/hero-frames/frame-00011.webp",
+      "size": 135322
+    },
+    {
+      "index": 12,
+      "fileName": "frame-00012.webp",
+      "path": "/hero-frames/frame-00012.webp",
+      "size": 136770
+    },
+    {
+      "index": 13,
+      "fileName": "frame-00013.webp",
+      "path": "/hero-frames/frame-00013.webp",
+      "size": 139360
+    },
+    {
+      "index": 14,
+      "fileName": "frame-00014.webp",
+      "path": "/hero-frames/frame-00014.webp",
+      "size": 136198
+    },
+    {
+      "index": 15,
+      "fileName": "frame-00015.webp",
+      "path": "/hero-frames/frame-00015.webp",
+      "size": 133012
+    },
+    {
+      "index": 16,
+      "fileName": "frame-00016.webp",
+      "path": "/hero-frames/frame-00016.webp",
+      "size": 129754
+    },
+    {
+      "index": 17,
+      "fileName": "frame-00017.webp",
+      "path": "/hero-frames/frame-00017.webp",
+      "size": 129874
+    },
+    {
+      "index": 18,
+      "fileName": "frame-00018.webp",
+      "path": "/hero-frames/frame-00018.webp",
+      "size": 128820
+    },
+    {
+      "index": 19,
+      "fileName": "frame-00019.webp",
+      "path": "/hero-frames/frame-00019.webp",
+      "size": 129058
+    },
+    {
+      "index": 20,
+      "fileName": "frame-00020.webp",
+      "path": "/hero-frames/frame-00020.webp",
+      "size": 129624
+    },
+    {
+      "index": 21,
+      "fileName": "frame-00021.webp",
+      "path": "/hero-frames/frame-00021.webp",
+      "size": 133246
+    },
+    {
+      "index": 22,
+      "fileName": "frame-00022.webp",
+      "path": "/hero-frames/frame-00022.webp",
+      "size": 129524
+    },
+    {
+      "index": 23,
+      "fileName": "frame-00023.webp",
+      "path": "/hero-frames/frame-00023.webp",
+      "size": 127894
+    },
+    {
+      "index": 24,
+      "fileName": "frame-00024.webp",
+      "path": "/hero-frames/frame-00024.webp",
+      "size": 125388
+    },
+    {
+      "index": 25,
+      "fileName": "frame-00025.webp",
+      "path": "/hero-frames/frame-00025.webp",
+      "size": 124912
+    },
+    {
+      "index": 26,
+      "fileName": "frame-00026.webp",
+      "path": "/hero-frames/frame-00026.webp",
+      "size": 122826
+    },
+    {
+      "index": 27,
+      "fileName": "frame-00027.webp",
+      "path": "/hero-frames/frame-00027.webp",
+      "size": 122226
+    },
+    {
+      "index": 28,
+      "fileName": "frame-00028.webp",
+      "path": "/hero-frames/frame-00028.webp",
+      "size": 121882
+    },
+    {
+      "index": 29,
+      "fileName": "frame-00029.webp",
+      "path": "/hero-frames/frame-00029.webp",
+      "size": 125406
+    },
+    {
+      "index": 30,
+      "fileName": "frame-00030.webp",
+      "path": "/hero-frames/frame-00030.webp",
+      "size": 122728
+    },
+    {
+      "index": 31,
+      "fileName": "frame-00031.webp",
+      "path": "/hero-frames/frame-00031.webp",
+      "size": 120538
+    },
+    {
+      "index": 32,
+      "fileName": "frame-00032.webp",
+      "path": "/hero-frames/frame-00032.webp",
+      "size": 118996
+    },
+    {
+      "index": 33,
+      "fileName": "frame-00033.webp",
+      "path": "/hero-frames/frame-00033.webp",
+      "size": 118840
+    },
+    {
+      "index": 34,
+      "fileName": "frame-00034.webp",
+      "path": "/hero-frames/frame-00034.webp",
+      "size": 116910
+    },
+    {
+      "index": 35,
+      "fileName": "frame-00035.webp",
+      "path": "/hero-frames/frame-00035.webp",
+      "size": 117366
+    },
+    {
+      "index": 36,
+      "fileName": "frame-00036.webp",
+      "path": "/hero-frames/frame-00036.webp",
+      "size": 117334
+    },
+    {
+      "index": 37,
+      "fileName": "frame-00037.webp",
+      "path": "/hero-frames/frame-00037.webp",
+      "size": 121526
+    },
+    {
+      "index": 38,
+      "fileName": "frame-00038.webp",
+      "path": "/hero-frames/frame-00038.webp",
+      "size": 118176
+    },
+    {
+      "index": 39,
+      "fileName": "frame-00039.webp",
+      "path": "/hero-frames/frame-00039.webp",
+      "size": 116514
+    },
+    {
+      "index": 40,
+      "fileName": "frame-00040.webp",
+      "path": "/hero-frames/frame-00040.webp",
+      "size": 115020
+    },
+    {
+      "index": 41,
+      "fileName": "frame-00041.webp",
+      "path": "/hero-frames/frame-00041.webp",
+      "size": 116008
+    },
+    {
+      "index": 42,
+      "fileName": "frame-00042.webp",
+      "path": "/hero-frames/frame-00042.webp",
+      "size": 113482
+    },
+    {
+      "index": 43,
+      "fileName": "frame-00043.webp",
+      "path": "/hero-frames/frame-00043.webp",
+      "size": 113702
+    },
+    {
+      "index": 44,
+      "fileName": "frame-00044.webp",
+      "path": "/hero-frames/frame-00044.webp",
+      "size": 113720
+    },
+    {
+      "index": 45,
+      "fileName": "frame-00045.webp",
+      "path": "/hero-frames/frame-00045.webp",
+      "size": 116502
+    },
+    {
+      "index": 46,
+      "fileName": "frame-00046.webp",
+      "path": "/hero-frames/frame-00046.webp",
+      "size": 113444
+    },
+    {
+      "index": 47,
+      "fileName": "frame-00047.webp",
+      "path": "/hero-frames/frame-00047.webp",
+      "size": 113146
+    },
+    {
+      "index": 48,
+      "fileName": "frame-00048.webp",
+      "path": "/hero-frames/frame-00048.webp",
+      "size": 111006
+    },
+    {
+      "index": 49,
+      "fileName": "frame-00049.webp",
+      "path": "/hero-frames/frame-00049.webp",
+      "size": 110294
+    },
+    {
+      "index": 50,
+      "fileName": "frame-00050.webp",
+      "path": "/hero-frames/frame-00050.webp",
+      "size": 108598
+    },
+    {
+      "index": 51,
+      "fileName": "frame-00051.webp",
+      "path": "/hero-frames/frame-00051.webp",
+      "size": 109026
+    },
+    {
+      "index": 52,
+      "fileName": "frame-00052.webp",
+      "path": "/hero-frames/frame-00052.webp",
+      "size": 109746
+    },
+    {
+      "index": 53,
+      "fileName": "frame-00053.webp",
+      "path": "/hero-frames/frame-00053.webp",
+      "size": 112098
+    },
+    {
+      "index": 54,
+      "fileName": "frame-00054.webp",
+      "path": "/hero-frames/frame-00054.webp",
+      "size": 108550
+    },
+    {
+      "index": 55,
+      "fileName": "frame-00055.webp",
+      "path": "/hero-frames/frame-00055.webp",
+      "size": 106520
+    },
+    {
+      "index": 56,
+      "fileName": "frame-00056.webp",
+      "path": "/hero-frames/frame-00056.webp",
+      "size": 103850
+    },
+    {
+      "index": 57,
+      "fileName": "frame-00057.webp",
+      "path": "/hero-frames/frame-00057.webp",
+      "size": 103528
+    },
+    {
+      "index": 58,
+      "fileName": "frame-00058.webp",
+      "path": "/hero-frames/frame-00058.webp",
+      "size": 101552
+    },
+    {
+      "index": 59,
+      "fileName": "frame-00059.webp",
+      "path": "/hero-frames/frame-00059.webp",
+      "size": 99878
+    },
+    {
+      "index": 60,
+      "fileName": "frame-00060.webp",
+      "path": "/hero-frames/frame-00060.webp",
+      "size": 97742
+    },
+    {
+      "index": 61,
+      "fileName": "frame-00061.webp",
+      "path": "/hero-frames/frame-00061.webp",
+      "size": 101680
+    },
+    {
+      "index": 62,
+      "fileName": "frame-00062.webp",
+      "path": "/hero-frames/frame-00062.webp",
+      "size": 95982
+    },
+    {
+      "index": 63,
+      "fileName": "frame-00063.webp",
+      "path": "/hero-frames/frame-00063.webp",
+      "size": 96142
+    },
+    {
+      "index": 64,
+      "fileName": "frame-00064.webp",
+      "path": "/hero-frames/frame-00064.webp",
+      "size": 93252
+    },
+    {
+      "index": 65,
+      "fileName": "frame-00065.webp",
+      "path": "/hero-frames/frame-00065.webp",
+      "size": 95498
+    },
+    {
+      "index": 66,
+      "fileName": "frame-00066.webp",
+      "path": "/hero-frames/frame-00066.webp",
+      "size": 94066
+    },
+    {
+      "index": 67,
+      "fileName": "frame-00067.webp",
+      "path": "/hero-frames/frame-00067.webp",
+      "size": 93218
+    },
+    {
+      "index": 68,
+      "fileName": "frame-00068.webp",
+      "path": "/hero-frames/frame-00068.webp",
+      "size": 92392
+    },
+    {
+      "index": 69,
+      "fileName": "frame-00069.webp",
+      "path": "/hero-frames/frame-00069.webp",
+      "size": 94450
+    },
+    {
+      "index": 70,
+      "fileName": "frame-00070.webp",
+      "path": "/hero-frames/frame-00070.webp",
+      "size": 91448
+    },
+    {
+      "index": 71,
+      "fileName": "frame-00071.webp",
+      "path": "/hero-frames/frame-00071.webp",
+      "size": 88384
+    },
+    {
+      "index": 72,
+      "fileName": "frame-00072.webp",
+      "path": "/hero-frames/frame-00072.webp",
+      "size": 85850
+    },
+    {
+      "index": 73,
+      "fileName": "frame-00073.webp",
+      "path": "/hero-frames/frame-00073.webp",
+      "size": 83822
+    },
+    {
+      "index": 74,
+      "fileName": "frame-00074.webp",
+      "path": "/hero-frames/frame-00074.webp",
+      "size": 79960
+    },
+    {
+      "index": 75,
+      "fileName": "frame-00075.webp",
+      "path": "/hero-frames/frame-00075.webp",
+      "size": 79668
+    },
+    {
+      "index": 76,
+      "fileName": "frame-00076.webp",
+      "path": "/hero-frames/frame-00076.webp",
+      "size": 78434
+    },
+    {
+      "index": 77,
+      "fileName": "frame-00077.webp",
+      "path": "/hero-frames/frame-00077.webp",
+      "size": 78496
+    },
+    {
+      "index": 78,
+      "fileName": "frame-00078.webp",
+      "path": "/hero-frames/frame-00078.webp",
+      "size": 76930
+    },
+    {
+      "index": 79,
+      "fileName": "frame-00079.webp",
+      "path": "/hero-frames/frame-00079.webp",
+      "size": 73398
+    },
+    {
+      "index": 80,
+      "fileName": "frame-00080.webp",
+      "path": "/hero-frames/frame-00080.webp",
+      "size": 71256
+    },
+    {
+      "index": 81,
+      "fileName": "frame-00081.webp",
+      "path": "/hero-frames/frame-00081.webp",
+      "size": 69234
+    },
+    {
+      "index": 82,
+      "fileName": "frame-00082.webp",
+      "path": "/hero-frames/frame-00082.webp",
+      "size": 66070
+    },
+    {
+      "index": 83,
+      "fileName": "frame-00083.webp",
+      "path": "/hero-frames/frame-00083.webp",
+      "size": 64740
+    },
+    {
+      "index": 84,
+      "fileName": "frame-00084.webp",
+      "path": "/hero-frames/frame-00084.webp",
+      "size": 62304
+    },
+    {
+      "index": 85,
+      "fileName": "frame-00085.webp",
+      "path": "/hero-frames/frame-00085.webp",
+      "size": 62654
+    },
+    {
+      "index": 86,
+      "fileName": "frame-00086.webp",
+      "path": "/hero-frames/frame-00086.webp",
+      "size": 61308
+    },
+    {
+      "index": 87,
+      "fileName": "frame-00087.webp",
+      "path": "/hero-frames/frame-00087.webp",
+      "size": 59142
+    },
+    {
+      "index": 88,
+      "fileName": "frame-00088.webp",
+      "path": "/hero-frames/frame-00088.webp",
+      "size": 57064
+    },
+    {
+      "index": 89,
+      "fileName": "frame-00089.webp",
+      "path": "/hero-frames/frame-00089.webp",
+      "size": 56342
+    },
+    {
+      "index": 90,
+      "fileName": "frame-00090.webp",
+      "path": "/hero-frames/frame-00090.webp",
+      "size": 56456
+    },
+    {
+      "index": 91,
+      "fileName": "frame-00091.webp",
+      "path": "/hero-frames/frame-00091.webp",
+      "size": 57648
+    },
+    {
+      "index": 92,
+      "fileName": "frame-00092.webp",
+      "path": "/hero-frames/frame-00092.webp",
+      "size": 59246
+    },
+    {
+      "index": 93,
+      "fileName": "frame-00093.webp",
+      "path": "/hero-frames/frame-00093.webp",
+      "size": 61962
+    },
+    {
+      "index": 94,
+      "fileName": "frame-00094.webp",
+      "path": "/hero-frames/frame-00094.webp",
+      "size": 62436
+    },
+    {
+      "index": 95,
+      "fileName": "frame-00095.webp",
+      "path": "/hero-frames/frame-00095.webp",
+      "size": 63404
+    },
+    {
+      "index": 96,
+      "fileName": "frame-00096.webp",
+      "path": "/hero-frames/frame-00096.webp",
+      "size": 63688
+    },
+    {
+      "index": 97,
+      "fileName": "frame-00097.webp",
+      "path": "/hero-frames/frame-00097.webp",
+      "size": 64848
+    },
+    {
+      "index": 98,
+      "fileName": "frame-00098.webp",
+      "path": "/hero-frames/frame-00098.webp",
+      "size": 66974
+    },
+    {
+      "index": 99,
+      "fileName": "frame-00099.webp",
+      "path": "/hero-frames/frame-00099.webp",
+      "size": 70132
+    },
+    {
+      "index": 100,
+      "fileName": "frame-00100.webp",
+      "path": "/hero-frames/frame-00100.webp",
+      "size": 74090
+    },
+    {
+      "index": 101,
+      "fileName": "frame-00101.webp",
+      "path": "/hero-frames/frame-00101.webp",
+      "size": 78242
+    },
+    {
+      "index": 102,
+      "fileName": "frame-00102.webp",
+      "path": "/hero-frames/frame-00102.webp",
+      "size": 79904
+    },
+    {
+      "index": 103,
+      "fileName": "frame-00103.webp",
+      "path": "/hero-frames/frame-00103.webp",
+      "size": 82638
+    },
+    {
+      "index": 104,
+      "fileName": "frame-00104.webp",
+      "path": "/hero-frames/frame-00104.webp",
+      "size": 83482
+    },
+    {
+      "index": 105,
+      "fileName": "frame-00105.webp",
+      "path": "/hero-frames/frame-00105.webp",
+      "size": 85924
+    },
+    {
+      "index": 106,
+      "fileName": "frame-00106.webp",
+      "path": "/hero-frames/frame-00106.webp",
+      "size": 87614
+    },
+    {
+      "index": 107,
+      "fileName": "frame-00107.webp",
+      "path": "/hero-frames/frame-00107.webp",
+      "size": 90964
+    },
+    {
+      "index": 108,
+      "fileName": "frame-00108.webp",
+      "path": "/hero-frames/frame-00108.webp",
+      "size": 92888
+    },
+    {
+      "index": 109,
+      "fileName": "frame-00109.webp",
+      "path": "/hero-frames/frame-00109.webp",
+      "size": 96320
+    },
+    {
+      "index": 110,
+      "fileName": "frame-00110.webp",
+      "path": "/hero-frames/frame-00110.webp",
+      "size": 96400
+    },
+    {
+      "index": 111,
+      "fileName": "frame-00111.webp",
+      "path": "/hero-frames/frame-00111.webp",
+      "size": 97918
+    },
+    {
+      "index": 112,
+      "fileName": "frame-00112.webp",
+      "path": "/hero-frames/frame-00112.webp",
+      "size": 97430
+    },
+    {
+      "index": 113,
+      "fileName": "frame-00113.webp",
+      "path": "/hero-frames/frame-00113.webp",
+      "size": 99486
+    },
+    {
+      "index": 114,
+      "fileName": "frame-00114.webp",
+      "path": "/hero-frames/frame-00114.webp",
+      "size": 99890
+    },
+    {
+      "index": 115,
+      "fileName": "frame-00115.webp",
+      "path": "/hero-frames/frame-00115.webp",
+      "size": 104056
+    },
+    {
+      "index": 116,
+      "fileName": "frame-00116.webp",
+      "path": "/hero-frames/frame-00116.webp",
+      "size": 104892
+    },
+    {
+      "index": 117,
+      "fileName": "frame-00117.webp",
+      "path": "/hero-frames/frame-00117.webp",
+      "size": 111452
+    },
+    {
+      "index": 118,
+      "fileName": "frame-00118.webp",
+      "path": "/hero-frames/frame-00118.webp",
+      "size": 108336
+    },
+    {
+      "index": 119,
+      "fileName": "frame-00119.webp",
+      "path": "/hero-frames/frame-00119.webp",
+      "size": 109496
+    },
+    {
+      "index": 120,
+      "fileName": "frame-00120.webp",
+      "path": "/hero-frames/frame-00120.webp",
+      "size": 107352
+    },
+    {
+      "index": 121,
+      "fileName": "frame-00121.webp",
+      "path": "/hero-frames/frame-00121.webp",
+      "size": 103446
+    },
+    {
+      "index": 122,
+      "fileName": "frame-00122.webp",
+      "path": "/hero-frames/frame-00122.webp",
+      "size": 103012
+    },
+    {
+      "index": 123,
+      "fileName": "frame-00123.webp",
+      "path": "/hero-frames/frame-00123.webp",
+      "size": 105618
+    },
+    {
+      "index": 124,
+      "fileName": "frame-00124.webp",
+      "path": "/hero-frames/frame-00124.webp",
+      "size": 106330
+    },
+    {
+      "index": 125,
+      "fileName": "frame-00125.webp",
+      "path": "/hero-frames/frame-00125.webp",
+      "size": 106702
+    },
+    {
+      "index": 126,
+      "fileName": "frame-00126.webp",
+      "path": "/hero-frames/frame-00126.webp",
+      "size": 104454
+    },
+    {
+      "index": 127,
+      "fileName": "frame-00127.webp",
+      "path": "/hero-frames/frame-00127.webp",
+      "size": 107162
+    },
+    {
+      "index": 128,
+      "fileName": "frame-00128.webp",
+      "path": "/hero-frames/frame-00128.webp",
+      "size": 105446
+    },
+    {
+      "index": 129,
+      "fileName": "frame-00129.webp",
+      "path": "/hero-frames/frame-00129.webp",
+      "size": 101500
+    },
+    {
+      "index": 130,
+      "fileName": "frame-00130.webp",
+      "path": "/hero-frames/frame-00130.webp",
+      "size": 99058
+    },
+    {
+      "index": 131,
+      "fileName": "frame-00131.webp",
+      "path": "/hero-frames/frame-00131.webp",
+      "size": 101462
+    },
+    {
+      "index": 132,
+      "fileName": "frame-00132.webp",
+      "path": "/hero-frames/frame-00132.webp",
+      "size": 100016
+    },
+    {
+      "index": 133,
+      "fileName": "frame-00133.webp",
+      "path": "/hero-frames/frame-00133.webp",
+      "size": 102568
+    },
+    {
+      "index": 134,
+      "fileName": "frame-00134.webp",
+      "path": "/hero-frames/frame-00134.webp",
+      "size": 98430
+    },
+    {
+      "index": 135,
+      "fileName": "frame-00135.webp",
+      "path": "/hero-frames/frame-00135.webp",
+      "size": 98010
+    },
+    {
+      "index": 136,
+      "fileName": "frame-00136.webp",
+      "path": "/hero-frames/frame-00136.webp",
+      "size": 94736
+    },
+    {
+      "index": 137,
+      "fileName": "frame-00137.webp",
+      "path": "/hero-frames/frame-00137.webp",
+      "size": 92050
+    },
+    {
+      "index": 138,
+      "fileName": "frame-00138.webp",
+      "path": "/hero-frames/frame-00138.webp",
+      "size": 90106
+    },
+    {
+      "index": 139,
+      "fileName": "frame-00139.webp",
+      "path": "/hero-frames/frame-00139.webp",
+      "size": 91108
+    },
+    {
+      "index": 140,
+      "fileName": "frame-00140.webp",
+      "path": "/hero-frames/frame-00140.webp",
+      "size": 89154
+    },
+    {
+      "index": 141,
+      "fileName": "frame-00141.webp",
+      "path": "/hero-frames/frame-00141.webp",
+      "size": 90944
+    },
+    {
+      "index": 142,
+      "fileName": "frame-00142.webp",
+      "path": "/hero-frames/frame-00142.webp",
+      "size": 89306
+    },
+    {
+      "index": 143,
+      "fileName": "frame-00143.webp",
+      "path": "/hero-frames/frame-00143.webp",
+      "size": 89066
+    },
+    {
+      "index": 144,
+      "fileName": "frame-00144.webp",
+      "path": "/hero-frames/frame-00144.webp",
+      "size": 89168
+    },
+    {
+      "index": 145,
+      "fileName": "frame-00145.webp",
+      "path": "/hero-frames/frame-00145.webp",
+      "size": 89448
+    },
+    {
+      "index": 146,
+      "fileName": "frame-00146.webp",
+      "path": "/hero-frames/frame-00146.webp",
+      "size": 90270
+    },
+    {
+      "index": 147,
+      "fileName": "frame-00147.webp",
+      "path": "/hero-frames/frame-00147.webp",
+      "size": 93012
+    },
+    {
+      "index": 148,
+      "fileName": "frame-00148.webp",
+      "path": "/hero-frames/frame-00148.webp",
+      "size": 93654
+    },
+    {
+      "index": 149,
+      "fileName": "frame-00149.webp",
+      "path": "/hero-frames/frame-00149.webp",
+      "size": 96934
+    },
+    {
+      "index": 150,
+      "fileName": "frame-00150.webp",
+      "path": "/hero-frames/frame-00150.webp",
+      "size": 97506
+    },
+    {
+      "index": 151,
+      "fileName": "frame-00151.webp",
+      "path": "/hero-frames/frame-00151.webp",
+      "size": 103864
+    },
+    {
+      "index": 152,
+      "fileName": "frame-00152.webp",
+      "path": "/hero-frames/frame-00152.webp",
+      "size": 102920
+    },
+    {
+      "index": 153,
+      "fileName": "frame-00153.webp",
+      "path": "/hero-frames/frame-00153.webp",
+      "size": 103892
+    },
+    {
+      "index": 154,
+      "fileName": "frame-00154.webp",
+      "path": "/hero-frames/frame-00154.webp",
+      "size": 104340
+    },
+    {
+      "index": 155,
+      "fileName": "frame-00155.webp",
+      "path": "/hero-frames/frame-00155.webp",
+      "size": 107862
+    },
+    {
+      "index": 156,
+      "fileName": "frame-00156.webp",
+      "path": "/hero-frames/frame-00156.webp",
+      "size": 109614
+    },
+    {
+      "index": 157,
+      "fileName": "frame-00157.webp",
+      "path": "/hero-frames/frame-00157.webp",
+      "size": 117202
+    },
+    {
+      "index": 158,
+      "fileName": "frame-00158.webp",
+      "path": "/hero-frames/frame-00158.webp",
+      "size": 116068
+    },
+    {
+      "index": 159,
+      "fileName": "frame-00159.webp",
+      "path": "/hero-frames/frame-00159.webp",
+      "size": 122202
+    },
+    {
+      "index": 160,
+      "fileName": "frame-00160.webp",
+      "path": "/hero-frames/frame-00160.webp",
+      "size": 123256
+    },
+    {
+      "index": 161,
+      "fileName": "frame-00161.webp",
+      "path": "/hero-frames/frame-00161.webp",
+      "size": 127862
+    },
+    {
+      "index": 162,
+      "fileName": "frame-00162.webp",
+      "path": "/hero-frames/frame-00162.webp",
+      "size": 129140
+    },
+    {
+      "index": 163,
+      "fileName": "frame-00163.webp",
+      "path": "/hero-frames/frame-00163.webp",
+      "size": 136210
+    },
+    {
+      "index": 164,
+      "fileName": "frame-00164.webp",
+      "path": "/hero-frames/frame-00164.webp",
+      "size": 136450
+    },
+    {
+      "index": 165,
+      "fileName": "frame-00165.webp",
+      "path": "/hero-frames/frame-00165.webp",
+      "size": 139526
+    },
+    {
+      "index": 166,
+      "fileName": "frame-00166.webp",
+      "path": "/hero-frames/frame-00166.webp",
+      "size": 136602
+    },
+    {
+      "index": 167,
+      "fileName": "frame-00167.webp",
+      "path": "/hero-frames/frame-00167.webp",
+      "size": 135492
+    },
+    {
+      "index": 168,
+      "fileName": "frame-00168.webp",
+      "path": "/hero-frames/frame-00168.webp",
+      "size": 132790
+    },
+    {
+      "index": 169,
+      "fileName": "frame-00169.webp",
+      "path": "/hero-frames/frame-00169.webp",
+      "size": 131054
+    },
+    {
+      "index": 170,
+      "fileName": "frame-00170.webp",
+      "path": "/hero-frames/frame-00170.webp",
+      "size": 131576
+    },
+    {
+      "index": 171,
+      "fileName": "frame-00171.webp",
+      "path": "/hero-frames/frame-00171.webp",
+      "size": 134868
+    },
+    {
+      "index": 172,
+      "fileName": "frame-00172.webp",
+      "path": "/hero-frames/frame-00172.webp",
+      "size": 134802
+    },
+    {
+      "index": 173,
+      "fileName": "frame-00173.webp",
+      "path": "/hero-frames/frame-00173.webp",
+      "size": 136926
+    },
+    {
+      "index": 174,
+      "fileName": "frame-00174.webp",
+      "path": "/hero-frames/frame-00174.webp",
+      "size": 134386
+    },
+    {
+      "index": 175,
+      "fileName": "frame-00175.webp",
+      "path": "/hero-frames/frame-00175.webp",
+      "size": 135024
+    },
+    {
+      "index": 176,
+      "fileName": "frame-00176.webp",
+      "path": "/hero-frames/frame-00176.webp",
+      "size": 132428
+    },
+    {
+      "index": 177,
+      "fileName": "frame-00177.webp",
+      "path": "/hero-frames/frame-00177.webp",
+      "size": 127232
+    },
+    {
+      "index": 178,
+      "fileName": "frame-00178.webp",
+      "path": "/hero-frames/frame-00178.webp",
+      "size": 127874
+    },
+    {
+      "index": 179,
+      "fileName": "frame-00179.webp",
+      "path": "/hero-frames/frame-00179.webp",
+      "size": 130778
+    },
+    {
+      "index": 180,
+      "fileName": "frame-00180.webp",
+      "path": "/hero-frames/frame-00180.webp",
+      "size": 129256
+    },
+    {
+      "index": 181,
+      "fileName": "frame-00181.webp",
+      "path": "/hero-frames/frame-00181.webp",
+      "size": 132122
+    },
+    {
+      "index": 182,
+      "fileName": "frame-00182.webp",
+      "path": "/hero-frames/frame-00182.webp",
+      "size": 129882
+    },
+    {
+      "index": 183,
+      "fileName": "frame-00183.webp",
+      "path": "/hero-frames/frame-00183.webp",
+      "size": 129514
+    },
+    {
+      "index": 184,
+      "fileName": "frame-00184.webp",
+      "path": "/hero-frames/frame-00184.webp",
+      "size": 128176
+    },
+    {
+      "index": 185,
+      "fileName": "frame-00185.webp",
+      "path": "/hero-frames/frame-00185.webp",
+      "size": 126182
+    },
+    {
+      "index": 186,
+      "fileName": "frame-00186.webp",
+      "path": "/hero-frames/frame-00186.webp",
+      "size": 126274
+    },
+    {
+      "index": 187,
+      "fileName": "frame-00187.webp",
+      "path": "/hero-frames/frame-00187.webp",
+      "size": 133032
+    },
+    {
+      "index": 188,
+      "fileName": "frame-00188.webp",
+      "path": "/hero-frames/frame-00188.webp",
+      "size": 133826
+    },
+    {
+      "index": 189,
+      "fileName": "frame-00189.webp",
+      "path": "/hero-frames/frame-00189.webp",
+      "size": 137630
+    },
+    {
+      "index": 190,
+      "fileName": "frame-00190.webp",
+      "path": "/hero-frames/frame-00190.webp",
+      "size": 134292
+    },
+    {
+      "index": 191,
+      "fileName": "frame-00191.webp",
+      "path": "/hero-frames/frame-00191.webp",
+      "size": 134136
+    },
+    {
+      "index": 192,
+      "fileName": "frame-00192.webp",
+      "path": "/hero-frames/frame-00192.webp",
+      "size": 135358
+    },
+    {
+      "index": 193,
+      "fileName": "frame-00193.webp",
+      "path": "/hero-frames/frame-00193.webp",
+      "size": 136930
+    },
+    {
+      "index": 194,
+      "fileName": "frame-00194.webp",
+      "path": "/hero-frames/frame-00194.webp",
+      "size": 136996
+    },
+    {
+      "index": 195,
+      "fileName": "frame-00195.webp",
+      "path": "/hero-frames/frame-00195.webp",
+      "size": 138622
+    },
+    {
+      "index": 196,
+      "fileName": "frame-00196.webp",
+      "path": "/hero-frames/frame-00196.webp",
+      "size": 139452
+    },
+    {
+      "index": 197,
+      "fileName": "frame-00197.webp",
+      "path": "/hero-frames/frame-00197.webp",
+      "size": 140928
+    },
+    {
+      "index": 198,
+      "fileName": "frame-00198.webp",
+      "path": "/hero-frames/frame-00198.webp",
+      "size": 140140
+    },
+    {
+      "index": 199,
+      "fileName": "frame-00199.webp",
+      "path": "/hero-frames/frame-00199.webp",
+      "size": 140382
+    },
+    {
+      "index": 200,
+      "fileName": "frame-00200.webp",
+      "path": "/hero-frames/frame-00200.webp",
+      "size": 140152
+    },
+    {
+      "index": 201,
+      "fileName": "frame-00201.webp",
+      "path": "/hero-frames/frame-00201.webp",
+      "size": 141250
+    },
+    {
+      "index": 202,
+      "fileName": "frame-00202.webp",
+      "path": "/hero-frames/frame-00202.webp",
+      "size": 140508
+    },
+    {
+      "index": 203,
+      "fileName": "frame-00203.webp",
+      "path": "/hero-frames/frame-00203.webp",
+      "size": 141242
+    },
+    {
+      "index": 204,
+      "fileName": "frame-00204.webp",
+      "path": "/hero-frames/frame-00204.webp",
+      "size": 141544
+    },
+    {
+      "index": 205,
+      "fileName": "frame-00205.webp",
+      "path": "/hero-frames/frame-00205.webp",
+      "size": 143308
+    },
+    {
+      "index": 206,
+      "fileName": "frame-00206.webp",
+      "path": "/hero-frames/frame-00206.webp",
+      "size": 139842
+    },
+    {
+      "index": 207,
+      "fileName": "frame-00207.webp",
+      "path": "/hero-frames/frame-00207.webp",
+      "size": 138368
+    },
+    {
+      "index": 208,
+      "fileName": "frame-00208.webp",
+      "path": "/hero-frames/frame-00208.webp",
+      "size": 136918
+    },
+    {
+      "index": 209,
+      "fileName": "frame-00209.webp",
+      "path": "/hero-frames/frame-00209.webp",
+      "size": 133690
+    },
+    {
+      "index": 210,
+      "fileName": "frame-00210.webp",
+      "path": "/hero-frames/frame-00210.webp",
+      "size": 131368
+    },
+    {
+      "index": 211,
+      "fileName": "frame-00211.webp",
+      "path": "/hero-frames/frame-00211.webp",
+      "size": 128330
+    },
+    {
+      "index": 212,
+      "fileName": "frame-00212.webp",
+      "path": "/hero-frames/frame-00212.webp",
+      "size": 125406
+    },
+    {
+      "index": 213,
+      "fileName": "frame-00213.webp",
+      "path": "/hero-frames/frame-00213.webp",
+      "size": 125176
+    },
+    {
+      "index": 214,
+      "fileName": "frame-00214.webp",
+      "path": "/hero-frames/frame-00214.webp",
+      "size": 118536
+    },
+    {
+      "index": 215,
+      "fileName": "frame-00215.webp",
+      "path": "/hero-frames/frame-00215.webp",
+      "size": 112884
+    },
+    {
+      "index": 216,
+      "fileName": "frame-00216.webp",
+      "path": "/hero-frames/frame-00216.webp",
+      "size": 107324
+    },
+    {
+      "index": 217,
+      "fileName": "frame-00217.webp",
+      "path": "/hero-frames/frame-00217.webp",
+      "size": 101846
+    },
+    {
+      "index": 218,
+      "fileName": "frame-00218.webp",
+      "path": "/hero-frames/frame-00218.webp",
+      "size": 98852
+    },
+    {
+      "index": 219,
+      "fileName": "frame-00219.webp",
+      "path": "/hero-frames/frame-00219.webp",
+      "size": 92936
+    },
+    {
+      "index": 220,
+      "fileName": "frame-00220.webp",
+      "path": "/hero-frames/frame-00220.webp",
+      "size": 86336
+    },
+    {
+      "index": 221,
+      "fileName": "frame-00221.webp",
+      "path": "/hero-frames/frame-00221.webp",
+      "size": 87772
+    },
+    {
+      "index": 222,
+      "fileName": "frame-00222.webp",
+      "path": "/hero-frames/frame-00222.webp",
+      "size": 90208
+    },
+    {
+      "index": 223,
+      "fileName": "frame-00223.webp",
+      "path": "/hero-frames/frame-00223.webp",
+      "size": 90250
+    },
+    {
+      "index": 224,
+      "fileName": "frame-00224.webp",
+      "path": "/hero-frames/frame-00224.webp",
+      "size": 92484
+    },
+    {
+      "index": 225,
+      "fileName": "frame-00225.webp",
+      "path": "/hero-frames/frame-00225.webp",
+      "size": 95672
+    },
+    {
+      "index": 226,
+      "fileName": "frame-00226.webp",
+      "path": "/hero-frames/frame-00226.webp",
+      "size": 97306
+    },
+    {
+      "index": 227,
+      "fileName": "frame-00227.webp",
+      "path": "/hero-frames/frame-00227.webp",
+      "size": 98706
+    },
+    {
+      "index": 228,
+      "fileName": "frame-00228.webp",
+      "path": "/hero-frames/frame-00228.webp",
+      "size": 100668
+    },
+    {
+      "index": 229,
+      "fileName": "frame-00229.webp",
+      "path": "/hero-frames/frame-00229.webp",
+      "size": 100722
+    },
+    {
+      "index": 230,
+      "fileName": "frame-00230.webp",
+      "path": "/hero-frames/frame-00230.webp",
+      "size": 101522
+    },
+    {
+      "index": 231,
+      "fileName": "frame-00231.webp",
+      "path": "/hero-frames/frame-00231.webp",
+      "size": 102074
+    },
+    {
+      "index": 232,
+      "fileName": "frame-00232.webp",
+      "path": "/hero-frames/frame-00232.webp",
+      "size": 103468
+    },
+    {
+      "index": 233,
+      "fileName": "frame-00233.webp",
+      "path": "/hero-frames/frame-00233.webp",
+      "size": 103144
+    },
+    {
+      "index": 234,
+      "fileName": "frame-00234.webp",
+      "path": "/hero-frames/frame-00234.webp",
+      "size": 104612
+    },
+    {
+      "index": 235,
+      "fileName": "frame-00235.webp",
+      "path": "/hero-frames/frame-00235.webp",
+      "size": 104190
+    },
+    {
+      "index": 236,
+      "fileName": "frame-00236.webp",
+      "path": "/hero-frames/frame-00236.webp",
+      "size": 106520
+    },
+    {
+      "index": 237,
+      "fileName": "frame-00237.webp",
+      "path": "/hero-frames/frame-00237.webp",
+      "size": 105624
+    },
+    {
+      "index": 238,
+      "fileName": "frame-00238.webp",
+      "path": "/hero-frames/frame-00238.webp",
+      "size": 106044
+    },
+    {
+      "index": 239,
+      "fileName": "frame-00239.webp",
+      "path": "/hero-frames/frame-00239.webp",
+      "size": 106034
+    },
+    {
+      "index": 240,
+      "fileName": "frame-00240.webp",
+      "path": "/hero-frames/frame-00240.webp",
+      "size": 107194
+    },
+    {
+      "index": 241,
+      "fileName": "frame-00241.webp",
+      "path": "/hero-frames/frame-00241.webp",
+      "size": 105940
+    },
+    {
+      "index": 242,
+      "fileName": "frame-00242.webp",
+      "path": "/hero-frames/frame-00242.webp",
+      "size": 106878
+    },
+    {
+      "index": 243,
+      "fileName": "frame-00243.webp",
+      "path": "/hero-frames/frame-00243.webp",
+      "size": 107068
+    },
+    {
+      "index": 244,
+      "fileName": "frame-00244.webp",
+      "path": "/hero-frames/frame-00244.webp",
+      "size": 108922
+    },
+    {
+      "index": 245,
+      "fileName": "frame-00245.webp",
+      "path": "/hero-frames/frame-00245.webp",
+      "size": 107998
+    },
+    {
+      "index": 246,
+      "fileName": "frame-00246.webp",
+      "path": "/hero-frames/frame-00246.webp",
+      "size": 108014
+    },
+    {
+      "index": 247,
+      "fileName": "frame-00247.webp",
+      "path": "/hero-frames/frame-00247.webp",
+      "size": 108072
+    },
+    {
+      "index": 248,
+      "fileName": "frame-00248.webp",
+      "path": "/hero-frames/frame-00248.webp",
+      "size": 109334
+    },
+    {
+      "index": 249,
+      "fileName": "frame-00249.webp",
+      "path": "/hero-frames/frame-00249.webp",
+      "size": 107374
+    },
+    {
+      "index": 250,
+      "fileName": "frame-00250.webp",
+      "path": "/hero-frames/frame-00250.webp",
+      "size": 108898
+    },
+    {
+      "index": 251,
+      "fileName": "frame-00251.webp",
+      "path": "/hero-frames/frame-00251.webp",
+      "size": 109278
+    },
+    {
+      "index": 252,
+      "fileName": "frame-00252.webp",
+      "path": "/hero-frames/frame-00252.webp",
+      "size": 112004
+    },
+    {
+      "index": 253,
+      "fileName": "frame-00253.webp",
+      "path": "/hero-frames/frame-00253.webp",
+      "size": 111788
+    },
+    {
+      "index": 254,
+      "fileName": "frame-00254.webp",
+      "path": "/hero-frames/frame-00254.webp",
+      "size": 111736
+    },
+    {
+      "index": 255,
+      "fileName": "frame-00255.webp",
+      "path": "/hero-frames/frame-00255.webp",
+      "size": 111982
+    },
+    {
+      "index": 256,
+      "fileName": "frame-00256.webp",
+      "path": "/hero-frames/frame-00256.webp",
+      "size": 113790
+    },
+    {
+      "index": 257,
+      "fileName": "frame-00257.webp",
+      "path": "/hero-frames/frame-00257.webp",
+      "size": 113854
+    },
+    {
+      "index": 258,
+      "fileName": "frame-00258.webp",
+      "path": "/hero-frames/frame-00258.webp",
+      "size": 115624
+    },
+    {
+      "index": 259,
+      "fileName": "frame-00259.webp",
+      "path": "/hero-frames/frame-00259.webp",
+      "size": 116598
+    },
+    {
+      "index": 260,
+      "fileName": "frame-00260.webp",
+      "path": "/hero-frames/frame-00260.webp",
+      "size": 118104
+    },
+    {
+      "index": 261,
+      "fileName": "frame-00261.webp",
+      "path": "/hero-frames/frame-00261.webp",
+      "size": 118248
+    },
+    {
+      "index": 262,
+      "fileName": "frame-00262.webp",
+      "path": "/hero-frames/frame-00262.webp",
+      "size": 118192
+    },
+    {
+      "index": 263,
+      "fileName": "frame-00263.webp",
+      "path": "/hero-frames/frame-00263.webp",
+      "size": 118206
+    },
+    {
+      "index": 264,
+      "fileName": "frame-00264.webp",
+      "path": "/hero-frames/frame-00264.webp",
+      "size": 120278
+    },
+    {
+      "index": 265,
+      "fileName": "frame-00265.webp",
+      "path": "/hero-frames/frame-00265.webp",
+      "size": 118574
+    },
+    {
+      "index": 266,
+      "fileName": "frame-00266.webp",
+      "path": "/hero-frames/frame-00266.webp",
+      "size": 119692
+    },
+    {
+      "index": 267,
+      "fileName": "frame-00267.webp",
+      "path": "/hero-frames/frame-00267.webp",
+      "size": 119728
+    },
+    {
+      "index": 268,
+      "fileName": "frame-00268.webp",
+      "path": "/hero-frames/frame-00268.webp",
+      "size": 121548
+    },
+    {
+      "index": 269,
+      "fileName": "frame-00269.webp",
+      "path": "/hero-frames/frame-00269.webp",
+      "size": 120864
+    },
+    {
+      "index": 270,
+      "fileName": "frame-00270.webp",
+      "path": "/hero-frames/frame-00270.webp",
+      "size": 120644
+    },
+    {
+      "index": 271,
+      "fileName": "frame-00271.webp",
+      "path": "/hero-frames/frame-00271.webp",
+      "size": 120876
+    },
+    {
+      "index": 272,
+      "fileName": "frame-00272.webp",
+      "path": "/hero-frames/frame-00272.webp",
+      "size": 121980
+    },
+    {
+      "index": 273,
+      "fileName": "frame-00273.webp",
+      "path": "/hero-frames/frame-00273.webp",
+      "size": 120456
+    },
+    {
+      "index": 274,
+      "fileName": "frame-00274.webp",
+      "path": "/hero-frames/frame-00274.webp",
+      "size": 120546
+    },
+    {
+      "index": 275,
+      "fileName": "frame-00275.webp",
+      "path": "/hero-frames/frame-00275.webp",
+      "size": 118892
+    },
+    {
+      "index": 276,
+      "fileName": "frame-00276.webp",
+      "path": "/hero-frames/frame-00276.webp",
+      "size": 119426
+    },
+    {
+      "index": 277,
+      "fileName": "frame-00277.webp",
+      "path": "/hero-frames/frame-00277.webp",
+      "size": 116998
+    },
+    {
+      "index": 278,
+      "fileName": "frame-00278.webp",
+      "path": "/hero-frames/frame-00278.webp",
+      "size": 114422
+    },
+    {
+      "index": 279,
+      "fileName": "frame-00279.webp",
+      "path": "/hero-frames/frame-00279.webp",
+      "size": 111104
+    },
+    {
+      "index": 280,
+      "fileName": "frame-00280.webp",
+      "path": "/hero-frames/frame-00280.webp",
+      "size": 110722
+    },
+    {
+      "index": 281,
+      "fileName": "frame-00281.webp",
+      "path": "/hero-frames/frame-00281.webp",
+      "size": 104714
+    },
+    {
+      "index": 282,
+      "fileName": "frame-00282.webp",
+      "path": "/hero-frames/frame-00282.webp",
+      "size": 101546
+    },
+    {
+      "index": 283,
+      "fileName": "frame-00283.webp",
+      "path": "/hero-frames/frame-00283.webp",
+      "size": 98398
+    },
+    {
+      "index": 284,
+      "fileName": "frame-00284.webp",
+      "path": "/hero-frames/frame-00284.webp",
+      "size": 97558
+    },
+    {
+      "index": 285,
+      "fileName": "frame-00285.webp",
+      "path": "/hero-frames/frame-00285.webp",
+      "size": 91944
+    },
+    {
+      "index": 286,
+      "fileName": "frame-00286.webp",
+      "path": "/hero-frames/frame-00286.webp",
+      "size": 87140
+    },
+    {
+      "index": 287,
+      "fileName": "frame-00287.webp",
+      "path": "/hero-frames/frame-00287.webp",
+      "size": 82622
+    },
+    {
+      "index": 288,
+      "fileName": "frame-00288.webp",
+      "path": "/hero-frames/frame-00288.webp",
+      "size": 79080
+    },
+    {
+      "index": 289,
+      "fileName": "frame-00289.webp",
+      "path": "/hero-frames/frame-00289.webp",
+      "size": 71696
+    },
+    {
+      "index": 290,
+      "fileName": "frame-00290.webp",
+      "path": "/hero-frames/frame-00290.webp",
+      "size": 69482
+    },
+    {
+      "index": 291,
+      "fileName": "frame-00291.webp",
+      "path": "/hero-frames/frame-00291.webp",
+      "size": 65408
+    },
+    {
+      "index": 292,
+      "fileName": "frame-00292.webp",
+      "path": "/hero-frames/frame-00292.webp",
+      "size": 62284
+    },
+    {
+      "index": 293,
+      "fileName": "frame-00293.webp",
+      "path": "/hero-frames/frame-00293.webp",
+      "size": 59214
+    },
+    {
+      "index": 294,
+      "fileName": "frame-00294.webp",
+      "path": "/hero-frames/frame-00294.webp",
+      "size": 56146
+    },
+    {
+      "index": 295,
+      "fileName": "frame-00295.webp",
+      "path": "/hero-frames/frame-00295.webp",
+      "size": 55090
+    },
+    {
+      "index": 296,
+      "fileName": "frame-00296.webp",
+      "path": "/hero-frames/frame-00296.webp",
+      "size": 53940
+    },
+    {
+      "index": 297,
+      "fileName": "frame-00297.webp",
+      "path": "/hero-frames/frame-00297.webp",
+      "size": 55530
+    },
+    {
+      "index": 298,
+      "fileName": "frame-00298.webp",
+      "path": "/hero-frames/frame-00298.webp",
+      "size": 56796
+    },
+    {
+      "index": 299,
+      "fileName": "frame-00299.webp",
+      "path": "/hero-frames/frame-00299.webp",
+      "size": 57860
+    },
+    {
+      "index": 300,
+      "fileName": "frame-00300.webp",
+      "path": "/hero-frames/frame-00300.webp",
+      "size": 58662
+    },
+    {
+      "index": 301,
+      "fileName": "frame-00301.webp",
+      "path": "/hero-frames/frame-00301.webp",
+      "size": 58850
+    },
+    {
+      "index": 302,
+      "fileName": "frame-00302.webp",
+      "path": "/hero-frames/frame-00302.webp",
+      "size": 59512
+    },
+    {
+      "index": 303,
+      "fileName": "frame-00303.webp",
+      "path": "/hero-frames/frame-00303.webp",
+      "size": 60150
+    },
+    {
+      "index": 304,
+      "fileName": "frame-00304.webp",
+      "path": "/hero-frames/frame-00304.webp",
+      "size": 60750
+    },
+    {
+      "index": 305,
+      "fileName": "frame-00305.webp",
+      "path": "/hero-frames/frame-00305.webp",
+      "size": 60716
+    },
+    {
+      "index": 306,
+      "fileName": "frame-00306.webp",
+      "path": "/hero-frames/frame-00306.webp",
+      "size": 60836
+    },
+    {
+      "index": 307,
+      "fileName": "frame-00307.webp",
+      "path": "/hero-frames/frame-00307.webp",
+      "size": 62084
+    },
+    {
+      "index": 308,
+      "fileName": "frame-00308.webp",
+      "path": "/hero-frames/frame-00308.webp",
+      "size": 63020
+    },
+    {
+      "index": 309,
+      "fileName": "frame-00309.webp",
+      "path": "/hero-frames/frame-00309.webp",
+      "size": 62814
+    },
+    {
+      "index": 310,
+      "fileName": "frame-00310.webp",
+      "path": "/hero-frames/frame-00310.webp",
+      "size": 63158
+    },
+    {
+      "index": 311,
+      "fileName": "frame-00311.webp",
+      "path": "/hero-frames/frame-00311.webp",
+      "size": 62966
+    },
+    {
+      "index": 312,
+      "fileName": "frame-00312.webp",
+      "path": "/hero-frames/frame-00312.webp",
+      "size": 63620
+    },
+    {
+      "index": 313,
+      "fileName": "frame-00313.webp",
+      "path": "/hero-frames/frame-00313.webp",
+      "size": 63586
+    },
+    {
+      "index": 314,
+      "fileName": "frame-00314.webp",
+      "path": "/hero-frames/frame-00314.webp",
+      "size": 64268
+    },
+    {
+      "index": 315,
+      "fileName": "frame-00315.webp",
+      "path": "/hero-frames/frame-00315.webp",
+      "size": 64534
+    },
+    {
+      "index": 316,
+      "fileName": "frame-00316.webp",
+      "path": "/hero-frames/frame-00316.webp",
+      "size": 65338
+    },
+    {
+      "index": 317,
+      "fileName": "frame-00317.webp",
+      "path": "/hero-frames/frame-00317.webp",
+      "size": 65736
+    },
+    {
+      "index": 318,
+      "fileName": "frame-00318.webp",
+      "path": "/hero-frames/frame-00318.webp",
+      "size": 64760
+    },
+    {
+      "index": 319,
+      "fileName": "frame-00319.webp",
+      "path": "/hero-frames/frame-00319.webp",
+      "size": 63580
+    },
+    {
+      "index": 320,
+      "fileName": "frame-00320.webp",
+      "path": "/hero-frames/frame-00320.webp",
+      "size": 64082
+    },
+    {
+      "index": 321,
+      "fileName": "frame-00321.webp",
+      "path": "/hero-frames/frame-00321.webp",
+      "size": 60960
+    },
+    {
+      "index": 322,
+      "fileName": "frame-00322.webp",
+      "path": "/hero-frames/frame-00322.webp",
+      "size": 61906
+    },
+    {
+      "index": 323,
+      "fileName": "frame-00323.webp",
+      "path": "/hero-frames/frame-00323.webp",
+      "size": 63334
+    },
+    {
+      "index": 324,
+      "fileName": "frame-00324.webp",
+      "path": "/hero-frames/frame-00324.webp",
+      "size": 66254
+    },
+    {
+      "index": 325,
+      "fileName": "frame-00325.webp",
+      "path": "/hero-frames/frame-00325.webp",
+      "size": 69876
+    },
+    {
+      "index": 326,
+      "fileName": "frame-00326.webp",
+      "path": "/hero-frames/frame-00326.webp",
+      "size": 69908
+    },
+    {
+      "index": 327,
+      "fileName": "frame-00327.webp",
+      "path": "/hero-frames/frame-00327.webp",
+      "size": 71078
+    },
+    {
+      "index": 328,
+      "fileName": "frame-00328.webp",
+      "path": "/hero-frames/frame-00328.webp",
+      "size": 72746
+    },
+    {
+      "index": 329,
+      "fileName": "frame-00329.webp",
+      "path": "/hero-frames/frame-00329.webp",
+      "size": 74234
+    },
+    {
+      "index": 330,
+      "fileName": "frame-00330.webp",
+      "path": "/hero-frames/frame-00330.webp",
+      "size": 76684
+    },
+    {
+      "index": 331,
+      "fileName": "frame-00331.webp",
+      "path": "/hero-frames/frame-00331.webp",
+      "size": 79580
+    },
+    {
+      "index": 332,
+      "fileName": "frame-00332.webp",
+      "path": "/hero-frames/frame-00332.webp",
+      "size": 83002
+    },
+    {
+      "index": 333,
+      "fileName": "frame-00333.webp",
+      "path": "/hero-frames/frame-00333.webp",
+      "size": 87398
+    },
+    {
+      "index": 334,
+      "fileName": "frame-00334.webp",
+      "path": "/hero-frames/frame-00334.webp",
+      "size": 89114
+    },
+    {
+      "index": 335,
+      "fileName": "frame-00335.webp",
+      "path": "/hero-frames/frame-00335.webp",
+      "size": 92540
+    },
+    {
+      "index": 336,
+      "fileName": "frame-00336.webp",
+      "path": "/hero-frames/frame-00336.webp",
+      "size": 94370
+    },
+    {
+      "index": 337,
+      "fileName": "frame-00337.webp",
+      "path": "/hero-frames/frame-00337.webp",
+      "size": 99196
+    },
+    {
+      "index": 338,
+      "fileName": "frame-00338.webp",
+      "path": "/hero-frames/frame-00338.webp",
+      "size": 102090
+    },
+    {
+      "index": 339,
+      "fileName": "frame-00339.webp",
+      "path": "/hero-frames/frame-00339.webp",
+      "size": 104140
+    },
+    {
+      "index": 340,
+      "fileName": "frame-00340.webp",
+      "path": "/hero-frames/frame-00340.webp",
+      "size": 106074
+    },
+    {
+      "index": 341,
+      "fileName": "frame-00341.webp",
+      "path": "/hero-frames/frame-00341.webp",
+      "size": 108332
+    },
+    {
+      "index": 342,
+      "fileName": "frame-00342.webp",
+      "path": "/hero-frames/frame-00342.webp",
+      "size": 108632
+    },
+    {
+      "index": 343,
+      "fileName": "frame-00343.webp",
+      "path": "/hero-frames/frame-00343.webp",
+      "size": 110304
+    },
+    {
+      "index": 344,
+      "fileName": "frame-00344.webp",
+      "path": "/hero-frames/frame-00344.webp",
+      "size": 110986
+    },
+    {
+      "index": 345,
+      "fileName": "frame-00345.webp",
+      "path": "/hero-frames/frame-00345.webp",
+      "size": 113298
+    },
+    {
+      "index": 346,
+      "fileName": "frame-00346.webp",
+      "path": "/hero-frames/frame-00346.webp",
+      "size": 112736
+    },
+    {
+      "index": 347,
+      "fileName": "frame-00347.webp",
+      "path": "/hero-frames/frame-00347.webp",
+      "size": 115450
+    },
+    {
+      "index": 348,
+      "fileName": "frame-00348.webp",
+      "path": "/hero-frames/frame-00348.webp",
+      "size": 115376
+    },
+    {
+      "index": 349,
+      "fileName": "frame-00349.webp",
+      "path": "/hero-frames/frame-00349.webp",
+      "size": 118946
+    },
+    {
+      "index": 350,
+      "fileName": "frame-00350.webp",
+      "path": "/hero-frames/frame-00350.webp",
+      "size": 118264
+    },
+    {
+      "index": 351,
+      "fileName": "frame-00351.webp",
+      "path": "/hero-frames/frame-00351.webp",
+      "size": 118148
+    },
+    {
+      "index": 352,
+      "fileName": "frame-00352.webp",
+      "path": "/hero-frames/frame-00352.webp",
+      "size": 116474
+    },
+    {
+      "index": 353,
+      "fileName": "frame-00353.webp",
+      "path": "/hero-frames/frame-00353.webp",
+      "size": 116890
+    },
+    {
+      "index": 354,
+      "fileName": "frame-00354.webp",
+      "path": "/hero-frames/frame-00354.webp",
+      "size": 117512
+    },
+    {
+      "index": 355,
+      "fileName": "frame-00355.webp",
+      "path": "/hero-frames/frame-00355.webp",
+      "size": 118418
+    },
+    {
+      "index": 356,
+      "fileName": "frame-00356.webp",
+      "path": "/hero-frames/frame-00356.webp",
+      "size": 117262
+    },
+    {
+      "index": 357,
+      "fileName": "frame-00357.webp",
+      "path": "/hero-frames/frame-00357.webp",
+      "size": 120750
+    },
+    {
+      "index": 358,
+      "fileName": "frame-00358.webp",
+      "path": "/hero-frames/frame-00358.webp",
+      "size": 119372
+    },
+    {
+      "index": 359,
+      "fileName": "frame-00359.webp",
+      "path": "/hero-frames/frame-00359.webp",
+      "size": 119462
+    },
+    {
+      "index": 360,
+      "fileName": "frame-00360.webp",
+      "path": "/hero-frames/frame-00360.webp",
+      "size": 118654
+    },
+    {
+      "index": 361,
+      "fileName": "frame-00361.webp",
+      "path": "/hero-frames/frame-00361.webp",
+      "size": 118946
+    },
+    {
+      "index": 362,
+      "fileName": "frame-00362.webp",
+      "path": "/hero-frames/frame-00362.webp",
+      "size": 116308
+    },
+    {
+      "index": 363,
+      "fileName": "frame-00363.webp",
+      "path": "/hero-frames/frame-00363.webp",
+      "size": 116294
+    },
+    {
+      "index": 364,
+      "fileName": "frame-00364.webp",
+      "path": "/hero-frames/frame-00364.webp",
+      "size": 117374
+    },
+    {
+      "index": 365,
+      "fileName": "frame-00365.webp",
+      "path": "/hero-frames/frame-00365.webp",
+      "size": 120508
+    },
+    {
+      "index": 366,
+      "fileName": "frame-00366.webp",
+      "path": "/hero-frames/frame-00366.webp",
+      "size": 119572
+    },
+    {
+      "index": 367,
+      "fileName": "frame-00367.webp",
+      "path": "/hero-frames/frame-00367.webp",
+      "size": 119428
+    },
+    {
+      "index": 368,
+      "fileName": "frame-00368.webp",
+      "path": "/hero-frames/frame-00368.webp",
+      "size": 118696
+    },
+    {
+      "index": 369,
+      "fileName": "frame-00369.webp",
+      "path": "/hero-frames/frame-00369.webp",
+      "size": 117100
+    },
+    {
+      "index": 370,
+      "fileName": "frame-00370.webp",
+      "path": "/hero-frames/frame-00370.webp",
+      "size": 115220
+    },
+    {
+      "index": 371,
+      "fileName": "frame-00371.webp",
+      "path": "/hero-frames/frame-00371.webp",
+      "size": 116780
+    },
+    {
+      "index": 372,
+      "fileName": "frame-00372.webp",
+      "path": "/hero-frames/frame-00372.webp",
+      "size": 119506
+    },
+    {
+      "index": 373,
+      "fileName": "frame-00373.webp",
+      "path": "/hero-frames/frame-00373.webp",
+      "size": 120680
+    },
+    {
+      "index": 374,
+      "fileName": "frame-00374.webp",
+      "path": "/hero-frames/frame-00374.webp",
+      "size": 117844
+    },
+    {
+      "index": 375,
+      "fileName": "frame-00375.webp",
+      "path": "/hero-frames/frame-00375.webp",
+      "size": 119466
+    },
+    {
+      "index": 376,
+      "fileName": "frame-00376.webp",
+      "path": "/hero-frames/frame-00376.webp",
+      "size": 117906
+    },
+    {
+      "index": 377,
+      "fileName": "frame-00377.webp",
+      "path": "/hero-frames/frame-00377.webp",
+      "size": 119076
+    },
+    {
+      "index": 378,
+      "fileName": "frame-00378.webp",
+      "path": "/hero-frames/frame-00378.webp",
+      "size": 117052
+    },
+    {
+      "index": 379,
+      "fileName": "frame-00379.webp",
+      "path": "/hero-frames/frame-00379.webp",
+      "size": 117564
+    },
+    {
+      "index": 380,
+      "fileName": "frame-00380.webp",
+      "path": "/hero-frames/frame-00380.webp",
+      "size": 117236
+    },
+    {
+      "index": 381,
+      "fileName": "frame-00381.webp",
+      "path": "/hero-frames/frame-00381.webp",
+      "size": 119880
+    },
+    {
+      "index": 382,
+      "fileName": "frame-00382.webp",
+      "path": "/hero-frames/frame-00382.webp",
+      "size": 118036
+    },
+    {
+      "index": 383,
+      "fileName": "frame-00383.webp",
+      "path": "/hero-frames/frame-00383.webp",
+      "size": 119116
+    },
+    {
+      "index": 384,
+      "fileName": "frame-00384.webp",
+      "path": "/hero-frames/frame-00384.webp",
+      "size": 119198
+    }
+  ]
+}
