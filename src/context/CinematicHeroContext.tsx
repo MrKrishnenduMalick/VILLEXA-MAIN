@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { siteConfigService } from '../services/siteConfigService';
 import { HeroConfig } from '../types/content';
@@ -83,22 +83,31 @@ export const CinematicHeroProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [isHomePage]);
 
+  const contextValue = useMemo(() => ({
+    heroConfig,
+    scrollProgress,
+    setScrollProgress,
+    isHeroActive,
+    setIsHeroActive,
+    isHeroCompleted,
+    setIsHeroCompleted,
+    isVideoReady,
+    setIsVideoReady,
+    isHomePage,
+    refreshHeroConfig
+  }), [
+    heroConfig,
+    scrollProgress,
+    setScrollProgress,
+    isHeroActive,
+    isHeroCompleted,
+    isVideoReady,
+    isHomePage,
+    refreshHeroConfig
+  ]);
+
   return (
-    <CinematicHeroContext.Provider
-      value={{
-        heroConfig,
-        scrollProgress,
-        setScrollProgress,
-        isHeroActive,
-        setIsHeroActive,
-        isHeroCompleted,
-        setIsHeroCompleted,
-        isVideoReady,
-        setIsVideoReady,
-        isHomePage,
-        refreshHeroConfig
-      }}
-    >
+    <CinematicHeroContext.Provider value={contextValue}>
       {children}
     </CinematicHeroContext.Provider>
   );

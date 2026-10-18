@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'wouter';
 import { ArrowRight, Play } from 'lucide-react';
 import { useCinematicHero } from '../../context/CinematicHeroContext';
@@ -6,9 +6,8 @@ import { useCinematicHero } from '../../context/CinematicHeroContext';
 export const CinematicHeroScroll: React.FC = () => {
   const { heroConfig, setScrollProgress } = useCinematicHero();
   const trackRef = useRef<HTMLDivElement | null>(null);
-
-  const [textOpacity, setTextOpacity] = useState(1);
-  const [textTranslateY, setTextTranslateY] = useState(0);
+  const textContainerRef = useRef<HTMLDivElement | null>(null);
+  const scrollCueRef = useRef<HTMLDivElement | null>(null);
 
   // Monitor scroll progression within the pinned hero track (Preserving exact engine math)
   useEffect(() => {
@@ -23,7 +22,6 @@ export const CinematicHeroScroll: React.FC = () => {
             return;
           }
 
-          const rect = track.getBoundingClientRect();
           const trackHeight = track.offsetHeight;
           const windowHeight = window.innerHeight;
           const totalScrollable = trackHeight - windowHeight;
@@ -33,20 +31,24 @@ export const CinematicHeroScroll: React.FC = () => {
             return;
           }
 
-          const scrolled = -rect.top;
+          const scrolled = window.scrollY;
           const progress = Math.min(Math.max(scrolled / totalScrollable, 0), 1);
 
           setScrollProgress(progress);
 
           // Progressive typography fade & drift:
           // 0.0 -> 0.22: Smoothly dissolves over the first ~22% of scroll progression
-          if (progress <= 0.22) {
-            const factor = progress / 0.22;
-            setTextOpacity(Math.max(1 - factor * 1.15, 0));
-            setTextTranslateY(-factor * 36);
-          } else {
-            setTextOpacity(0);
-            setTextTranslateY(-36);
+          const opacity = progress <= 0.22 ? Math.max(1 - (progress / 0.22) * 1.15, 0) : 0;
+          const translateY = progress <= 0.22 ? -(progress / 0.22) * 36 : -36;
+
+          if (textContainerRef.current) {
+            textContainerRef.current.style.opacity = String(opacity);
+            textContainerRef.current.style.transform = `translate3d(0, ${translateY}px, 0)`;
+            textContainerRef.current.style.pointerEvents = opacity > 0.15 ? 'auto' : 'none';
+          }
+
+          if (scrollCueRef.current) {
+            scrollCueRef.current.style.opacity = String(opacity);
           }
 
           ticking = false;
@@ -85,20 +87,20 @@ export const CinematicHeroScroll: React.FC = () => {
           flexDirection: 'column',
           justifyContent: 'center',
           overflow: 'hidden',
-          zIndex: 2,
-          pointerEvents: textOpacity > 0.05 ? 'auto' : 'none'
+          zIndex: 2
         }}
       >
         {/* Full-Screen Minimalist Editorial Opening */}
         <div
+          ref={textContainerRef}
           className="container"
           style={{
             position: 'relative',
             zIndex: 10,
-            opacity: textOpacity,
-            transform: `translateY(${textTranslateY}px)`,
-            transition: 'opacity 0.15s ease-out, transform 0.15s ease-out',
-            pointerEvents: textOpacity > 0.15 ? 'auto' : 'none'
+            opacity: 1,
+            transform: 'translate3d(0, 0px, 0)',
+            willChange: 'opacity, transform',
+            pointerEvents: 'auto'
           }}
         >
           <div
@@ -219,6 +221,7 @@ export const CinematicHeroScroll: React.FC = () => {
 
         {/* Bottom Pill Scroll Cue "(8) SCROLL TO EXPLORE" */}
         <div
+          ref={scrollCueRef}
           style={{
             position: 'absolute',
             bottom: '36px',
@@ -234,8 +237,8 @@ export const CinematicHeroScroll: React.FC = () => {
             border: '1px solid rgba(255, 255, 255, 0.14)',
             borderRadius: '9999px',
             boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
-            opacity: textOpacity,
-            transition: 'opacity 0.2s ease',
+            opacity: 1,
+            willChange: 'opacity',
             pointerEvents: 'none',
             zIndex: 10
           }}

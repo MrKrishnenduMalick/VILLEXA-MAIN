@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useCinematicHero } from '../../context/CinematicHeroContext';
 
-const MAX_CACHE_SIZE = 60; // Bounded in-memory frame cache (keeps ~5-6 MB decoded memory)
-const LOOKAHEAD_FRAMES = 16;
+const MAX_CACHE_SIZE = 96; // Bounded in-memory frame cache (~10-12 MB compressed WebP, fits easily in memory)
+const LOOKAHEAD_FRAMES = 12;
 const LOOKBEHIND_FRAMES = 6;
 
 export const CinematicShowroomBackground: React.FC = () => {
@@ -10,8 +10,10 @@ export const CinematicShowroomBackground: React.FC = () => {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const lastRenderedImageRef = useRef<HTMLImageElement | null>(null);
+  const lastRenderedIndexRef = useRef<number | null>(null);
+  const prevScheduledTargetRef = useRef<number | null>(null);
   const imageCacheRef = useRef<Map<number, HTMLImageElement>>(new Map());
-  const pendingRequestsRef = useRef<Set<number>>(new Set());
+  const inFlightRequestsRef = useRef<Map<number, Promise<HTMLImageElement>>>(new Map());
   const activeTargetIndexRef = useRef<number>(1);
 
   const [isReady, setIsReady] = useState(false);
@@ -86,6 +88,7 @@ export const CinematicShowroomBackground: React.FC = () => {
       canvas.height = height * dpr;
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
+      lastRenderedIndexRef.current = null; // Invalidate index cache so resize redraws cleanly
     }
 
     // Re-draw last valid frame or initial frame
@@ -100,7 +103,7 @@ export const CinematicShowroomBackground: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [handleResize]);
 
-  // 3. Image Preloader & Sliding Window Cache Management
+  // 3. Image Preloader, In-Flight Deduplication & Distance-Based Cache Management
   const loadFrame = useCallback((index: number): Promise<HTMLImageElement> => {
     const cache = imageCacheRef.current;
     const existing = cache.get(index);
@@ -108,39 +111,64 @@ export const CinematicShowroomBackground: React.FC = () => {
       return Promise.resolve(existing);
     }
 
-    return new Promise((resolve, reject) => {
+    // Deduplicate in-flight fetches for identical frame index
+    const inFlight = inFlightRequestsRef.current.get(index);
+    if (inFlight) {
+      return inFlight;
+    }
+
+    const promise = new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.src = getFrameUrl(index);
+
+      const cleanup = () => {
+        inFlightRequestsRef.current.delete(index);
+      };
 
       img.onload = () => {
-        pendingRequestsRef.current.delete(index);
+        cleanup();
         cache.set(index, img);
 
-        // Enforce cache bound - evict furthest frames from current position
+        // Distance-based cache eviction: evict frame furthest from active target
         if (cache.size > MAX_CACHE_SIZE) {
-          const keys = Array.from(cache.keys());
-          // Never evict frame 1 or finalFrame
-          const candidates = keys.filter(k => k !== 1 && k !== frameCount);
-          if (candidates.length > 0) {
-            const evictKey = candidates[0];
-            cache.delete(evictKey);
+          let furthestKey = -1;
+          let maxDist = -1;
+          const current = activeTargetIndexRef.current;
+          for (const key of cache.keys()) {
+            if (key === 1 || key === frameCount) continue; // Protect bookends (first & final)
+            const dist = Math.abs(key - current);
+            if (dist > maxDist) {
+              maxDist = dist;
+              furthestKey = key;
+            }
+          }
+          if (furthestKey !== -1) {
+            cache.delete(furthestKey);
           }
         }
 
-        resolve(img);
+        // Asynchronously decode off the main thread before resolving
+        if ('decode' in img) {
+          img.decode().then(() => resolve(img)).catch(() => resolve(img));
+        } else {
+          resolve(img);
+        }
       };
 
       img.onerror = () => {
-        pendingRequestsRef.current.delete(index);
-        // Do not reject hard; fall back to last rendered frame to guarantee canvas never goes black
+        cleanup();
         if (lastRenderedImageRef.current) {
           resolve(lastRenderedImageRef.current);
         } else {
           reject(new Error(`Failed to load frame ${index}`));
         }
       };
+
+      img.src = getFrameUrl(index);
     });
+
+    inFlightRequestsRef.current.set(index, promise);
+    return promise;
   }, [frameCount, getFrameUrl]);
 
   // 4. Initial Frame Load & Route Change Handling
@@ -155,6 +183,7 @@ export const CinematicShowroomBackground: React.FC = () => {
       .then((img) => {
         if (!isMounted || activeTargetIndexRef.current !== initialIndex) return;
         drawImageToCanvas(img);
+        lastRenderedIndexRef.current = initialIndex;
         setIsReady(true);
         setIsVideoReady(true);
       })
@@ -173,7 +202,7 @@ export const CinematicShowroomBackground: React.FC = () => {
     };
   }, [isHomePage, frameCount, loadFrame, drawImageToCanvas, setIsVideoReady]);
 
-  // 5. Scroll-Mapped Frame Rendering with Sliding Window Lookahead
+  // 5. Scroll-Mapped Frame Rendering with In-Flight Deduplication & Throttled Lookahead
   useEffect(() => {
     if (!isReady) return;
 
@@ -191,32 +220,43 @@ export const CinematicShowroomBackground: React.FC = () => {
     activeTargetIndexRef.current = targetIndex;
     let isCurrent = true;
 
-    // Try drawing immediately if cached
+    // 1. Draw immediately if already in cache and not already rendered
     const cached = imageCacheRef.current.get(targetIndex);
     if (cached && cached.complete && cached.naturalWidth > 0) {
-      drawImageToCanvas(cached);
+      if (lastRenderedIndexRef.current !== targetIndex) {
+        drawImageToCanvas(cached);
+        lastRenderedIndexRef.current = targetIndex;
+      }
     } else {
-      // Frame not yet cached: request it, but DO NOT CLEAR CANVAS TO BLACK.
-      // Retain last valid frame until new frame finishes decoding.
+      // Frame not yet cached: request with top priority
+      // Retain last valid frame until new frame finishes decoding (prevents black flash)
       loadFrame(targetIndex).then((img) => {
         if (!isCurrent || activeTargetIndexRef.current !== targetIndex) return;
-        drawImageToCanvas(img);
+        if (lastRenderedIndexRef.current !== targetIndex) {
+          drawImageToCanvas(img);
+          lastRenderedIndexRef.current = targetIndex;
+        }
       }).catch(() => {
         // Keep lastRenderedImageRef unchanged
       });
     }
 
-    // Progressive lookahead & lookbehind sliding window preloading
-    if (!prefersReducedMotion) {
+    // 2. Sliding window preloading (throttled to avoid network flooding)
+    if (!prefersReducedMotion && prevScheduledTargetRef.current !== targetIndex) {
+      prevScheduledTargetRef.current = targetIndex;
+      const MAX_CONCURRENT_IN_FLIGHT = 6;
+
       for (let offset = 1; offset <= LOOKAHEAD_FRAMES; offset++) {
+        if (inFlightRequestsRef.current.size >= MAX_CONCURRENT_IN_FLIGHT) break;
         const ahead = targetIndex + offset;
-        if (ahead <= frameCount && !imageCacheRef.current.has(ahead)) {
+        if (ahead <= frameCount && !imageCacheRef.current.has(ahead) && !inFlightRequestsRef.current.has(ahead)) {
           loadFrame(ahead);
         }
       }
       for (let offset = 1; offset <= LOOKBEHIND_FRAMES; offset++) {
+        if (inFlightRequestsRef.current.size >= MAX_CONCURRENT_IN_FLIGHT) break;
         const behind = targetIndex - offset;
-        if (behind >= 1 && !imageCacheRef.current.has(behind)) {
+        if (behind >= 1 && !imageCacheRef.current.has(behind) && !inFlightRequestsRef.current.has(behind)) {
           loadFrame(behind);
         }
       }
