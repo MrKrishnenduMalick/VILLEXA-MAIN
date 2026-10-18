@@ -2,9 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'wouter';
 import { ArrowRight, Hammer, Feather, Leaf } from 'lucide-react';
 import { CatalogueProductCard } from '../components/common/CatalogueProductCard';
-import { siteConfigService } from '../services/siteConfigService';
 import { productService } from '../services/productService';
-import { SiteConfiguration } from '../types/content';
 import { Product } from '../types/product';
 import { CinematicHeroScroll } from '../components/home/CinematicHeroScroll';
 
@@ -112,39 +110,21 @@ const INAUGURAL_FEATURED: Product[] = [
 ];
 
 export const HomePage: React.FC = () => {
-  const [config, setConfig] = useState<SiteConfiguration | null>(null);
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>(INAUGURAL_FEATURED);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [loadedConfig, products] = await Promise.all([
-          siteConfigService.getSiteConfig(),
-          productService.getFeaturedProducts()
-        ]);
-        setConfig(loadedConfig);
+        const products = await productService.getFeaturedProducts();
         if (products && products.length > 0) {
           setFeaturedProducts(products.slice(0, 4));
-        } else {
-          setFeaturedProducts(INAUGURAL_FEATURED);
         }
       } catch {
-        setFeaturedProducts(INAUGURAL_FEATURED);
-      } finally {
-        setIsLoading(false);
+        // Retain initial fallbacks safely
       }
     }
     loadData();
   }, []);
-
-  if (isLoading || !config) {
-    return (
-      <div style={{ padding: 'var(--space-24) 0', textAlign: 'center' }}>
-        <span className="kicker">ENTERING ATELIER...</span>
-      </div>
-    );
-  }
 
   const signaturePieces = featuredProducts.length > 0 ? featuredProducts : INAUGURAL_FEATURED;
 

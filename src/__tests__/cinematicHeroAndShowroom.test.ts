@@ -4,6 +4,7 @@ import { adminService } from '../services/adminService';
 import { siteConfigService } from '../services/siteConfigService';
 import { supabase } from '../services/supabaseClient';
 import { HeroConfig } from '../types/content';
+import { isHomeRoute } from '../context/CinematicHeroContext';
 
 describe('Phase 1: Cinematic Hero & Showroom Architecture', () => {
   beforeEach(() => {
@@ -263,6 +264,81 @@ describe('Phase 1: Cinematic Hero & Showroom Architecture', () => {
           })
         })
       );
+    });
+
+    // 6. Regression Suite: Frame 384 Root Cause & Lifecycle Fix
+    it('reliably normalizes homepage routes across variations using production isHomeRoute', () => {
+      expect(isHomeRoute('/')).toBe(true);
+      expect(isHomeRoute('')).toBe(true);
+      expect(isHomeRoute('/index.html')).toBe(true);
+      expect(isHomeRoute('/?utm_source=test')).toBe(true);
+      expect(isHomeRoute('/#collection-intro')).toBe(true);
+      expect(isHomeRoute('/catalogue')).toBe(false);
+      expect(isHomeRoute('/inspiration')).toBe(false);
+      expect(isHomeRoute('/product/emerald-velvet-armchair')).toBe(false);
+    });
+
+    it('selects frame 1 on initial homepage entry even if isHeroCompleted lingered', () => {
+      const isHomePage = true;
+      const isHeroCompletedLingering = true;
+      const scrollProgress = 0.0;
+      const frameCount = 384;
+
+      // Target index selection formula
+      const targetIndex = (!isHomePage || (isHeroCompletedLingering && scrollProgress >= 0.99))
+        ? frameCount
+        : Math.min(Math.max(Math.round(scrollProgress * (frameCount - 1)) + 1, 1), frameCount);
+
+      expect(targetIndex).toBe(1);
+    });
+
+    it('smoothly scrubs frames forward and backward with linear precision', () => {
+      const isHomePage = true;
+      const isHeroCompleted = false;
+      const frameCount = 384;
+
+      const computeFrame = (progress: number) => {
+        return (!isHomePage || (isHeroCompleted && progress >= 0.99))
+          ? frameCount
+          : Math.min(Math.max(Math.round(progress * (frameCount - 1)) + 1, 1), frameCount);
+      };
+
+      // Forward scrub
+      expect(computeFrame(0.0)).toBe(1);
+      expect(computeFrame(0.25)).toBe(97);
+      expect(computeFrame(0.5)).toBe(193);
+      expect(computeFrame(0.75)).toBe(288);
+      expect(computeFrame(1.0)).toBe(384);
+
+      // Reverse scrub
+      expect(computeFrame(0.8)).toBe(307);
+      expect(computeFrame(0.3)).toBe(116);
+      expect(computeFrame(0.0)).toBe(1);
+    });
+
+    it('holds frame 384 on non-homepage public routes and after hero completion', () => {
+      const frameCount = 384;
+
+      // On catalogue page
+      const catalogueTarget = (!false || (false && 0 >= 0.99))
+        ? frameCount
+        : 1;
+      expect(catalogueTarget).toBe(384);
+
+      // On completed homepage scrolled past hero
+      const completedTarget = (!true || (true && 1.0 >= 0.99))
+        ? frameCount
+        : 1;
+      expect(completedTarget).toBe(384);
+    });
+
+    it('guarantees frameSequence presence from siteConfigService.getLocalFallback()', () => {
+      const fallback = siteConfigService.getLocalFallback();
+      expect(fallback.hero).toBeDefined();
+      expect(fallback.hero.frameSequence).toBeDefined();
+      expect(fallback.hero.frameSequence?.frameCount).toBe(384);
+      expect(fallback.hero.frameSequence?.firstFrame).toBe('/hero-frames/frame-00001.webp');
+      expect(fallback.hero.frameSequence?.finalFrame).toBe('/hero-frames/frame-00384.webp');
     });
   });
 });

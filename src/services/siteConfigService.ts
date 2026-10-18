@@ -53,37 +53,49 @@ const defaultSiteConfig: SiteConfiguration = {
 };
 
 export const siteConfigService = {
-  async getSiteConfig(): Promise<SiteConfiguration> {
-    const getLocalFallback = (): SiteConfiguration => {
-      try {
-        if (typeof window !== 'undefined' && window.localStorage) {
-          const storedHero = window.localStorage.getItem('villexa_site_config_hero');
-          const storedShowroom = window.localStorage.getItem('villexa_site_config_showroom_media');
-          const storedBrand = window.localStorage.getItem('villexa_site_config_brand');
-          return {
-            hero: storedHero ? JSON.parse(storedHero) : defaultSiteConfig.hero,
-            showroomMedia: storedShowroom ? JSON.parse(storedShowroom) : defaultSiteConfig.showroomMedia,
-            brand: storedBrand ? JSON.parse(storedBrand) : defaultSiteConfig.brand
-          };
-        }
-      } catch {
-        // Fallback safely to defaultSiteConfig
+  getLocalFallback(): SiteConfiguration {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const storedHero = window.localStorage.getItem('villexa_site_config_hero');
+        const storedShowroom = window.localStorage.getItem('villexa_site_config_showroom_media');
+        const storedBrand = window.localStorage.getItem('villexa_site_config_brand');
+        const parsedHero = storedHero ? JSON.parse(storedHero) : defaultSiteConfig.hero;
+        return {
+          hero: {
+            ...defaultSiteConfig.hero,
+            ...parsedHero,
+            frameSequence: parsedHero?.frameSequence || defaultSiteConfig.hero.frameSequence
+          },
+          showroomMedia: storedShowroom ? JSON.parse(storedShowroom) : defaultSiteConfig.showroomMedia,
+          brand: storedBrand ? JSON.parse(storedBrand) : defaultSiteConfig.brand
+        };
       }
-      return defaultSiteConfig;
-    };
+    } catch {
+      // Fallback safely to defaultSiteConfig
+    }
+    return defaultSiteConfig;
+  },
 
-    if (!isSupabaseConfigured) return getLocalFallback();
+  async getSiteConfig(): Promise<SiteConfiguration> {
+    if (!isSupabaseConfigured) return this.getLocalFallback();
 
     try {
       const { data, error } = await supabase.from('site_settings').select('key, value');
-      if (error || !data) return getLocalFallback();
+      if (error || !data) return this.getLocalFallback();
 
       const heroRow = data.find((r) => r.key === 'hero');
       const showroomRow = data.find((r) => r.key === 'showroom_media');
       const brandRow = data.find((r) => r.key === 'brand');
 
+      const heroData = (heroRow?.value as HeroConfig) || defaultSiteConfig.hero;
+      const hero: HeroConfig = {
+        ...defaultSiteConfig.hero,
+        ...heroData,
+        frameSequence: heroData.frameSequence || defaultSiteConfig.hero.frameSequence
+      };
+
       const config: SiteConfiguration = {
-        hero: (heroRow?.value as HeroConfig) || defaultSiteConfig.hero,
+        hero,
         showroomMedia: (showroomRow?.value as ShowroomMediaConfig) || defaultSiteConfig.showroomMedia,
         brand: (brandRow?.value as BrandSettings) || defaultSiteConfig.brand
       };
@@ -91,7 +103,7 @@ export const siteConfigService = {
       // Cache locally for offline resilience
       try {
         if (typeof window !== 'undefined' && window.localStorage) {
-          if (heroRow?.value) window.localStorage.setItem('villexa_site_config_hero', JSON.stringify(heroRow.value));
+          if (heroRow?.value) window.localStorage.setItem('villexa_site_config_hero', JSON.stringify(hero));
           if (showroomRow?.value) window.localStorage.setItem('villexa_site_config_showroom_media', JSON.stringify(showroomRow.value));
           if (brandRow?.value) window.localStorage.setItem('villexa_site_config_brand', JSON.stringify(brandRow.value));
         }
@@ -101,7 +113,7 @@ export const siteConfigService = {
 
       return config;
     } catch {
-      return getLocalFallback();
+      return this.getLocalFallback();
     }
   }
 };

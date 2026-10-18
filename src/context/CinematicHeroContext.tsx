@@ -17,13 +17,24 @@ interface CinematicHeroContextType {
   refreshHeroConfig: () => Promise<void>;
 }
 
+/**
+ * Pure helper for robust homepage route detection.
+ * Handles root ('/'), empty string (''), trailing slashes,
+ * query parameters ('/?ref=...'), hash fragments ('/#hero'), and '/index.html'.
+ */
+export function isHomeRoute(path: string): boolean {
+  if (!path) return true;
+  const clean = path.split('?')[0].split('#')[0].replace(/\/index\.html$/, '').replace(/\/+$/, '');
+  return clean === '' || clean === '/';
+}
+
 const CinematicHeroContext = createContext<CinematicHeroContextType | undefined>(undefined);
 
 export const CinematicHeroProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [location] = useLocation();
-  const isHomePage = location === '/';
+  const isHomePage = isHomeRoute(location);
 
-  const [heroConfig, setHeroConfig] = useState<HeroConfig | null>(null);
+  const [heroConfig, setHeroConfig] = useState<HeroConfig>(() => siteConfigService.getLocalFallback().hero);
   const [scrollProgress, setScrollProgressState] = useState<number>(0);
   const [isHeroActive, setIsHeroActive] = useState<boolean>(isHomePage);
   const [isHeroCompleted, setIsHeroCompleted] = useState<boolean>(!isHomePage);
@@ -52,12 +63,13 @@ export const CinematicHeroProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsHeroCompleted(true);
       setScrollProgressState(1.0);
     } else {
-      // On homepage, if at top, active and reset progress to current scroll
+      // On homepage: activate hero and reset completion state for entrance
       setIsHeroActive(true);
-      if (typeof window !== 'undefined' && window.scrollY <= 10) {
-        setIsHeroCompleted(false);
-        setScrollProgressState(0);
+      if (typeof window !== 'undefined') {
+        window.scrollTo(0, 0);
       }
+      setIsHeroCompleted(false);
+      setScrollProgressState(0);
     }
   }, [isHomePage, location]);
 

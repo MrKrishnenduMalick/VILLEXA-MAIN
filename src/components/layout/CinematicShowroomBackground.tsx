@@ -12,6 +12,7 @@ export const CinematicShowroomBackground: React.FC = () => {
   const lastRenderedImageRef = useRef<HTMLImageElement | null>(null);
   const imageCacheRef = useRef<Map<number, HTMLImageElement>>(new Map());
   const pendingRequestsRef = useRef<Set<number>>(new Set());
+  const activeTargetIndexRef = useRef<number>(1);
 
   const [isReady, setIsReady] = useState(false);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -146,18 +147,20 @@ export const CinematicShowroomBackground: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
 
-    // Determine target initial frame based on route
-    const initialIndex = !isHomePage || isHeroCompleted ? frameCount : 1;
+    // Determine target initial frame based on route only
+    const initialIndex = !isHomePage ? frameCount : 1;
+    activeTargetIndexRef.current = initialIndex;
 
     loadFrame(initialIndex)
       .then((img) => {
-        if (!isMounted) return;
+        if (!isMounted || activeTargetIndexRef.current !== initialIndex) return;
         drawImageToCanvas(img);
         setIsReady(true);
         setIsVideoReady(true);
       })
       .catch(() => {
         // Fallback gracefully
+        if (!isMounted) return;
         setIsReady(true);
       });
 
@@ -168,7 +171,7 @@ export const CinematicShowroomBackground: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [isHomePage, isHeroCompleted, frameCount, loadFrame, drawImageToCanvas, setIsVideoReady]);
+  }, [isHomePage, frameCount, loadFrame, drawImageToCanvas, setIsVideoReady]);
 
   // 5. Scroll-Mapped Frame Rendering with Sliding Window Lookahead
   useEffect(() => {
@@ -177,13 +180,16 @@ export const CinematicShowroomBackground: React.FC = () => {
     // Determine active target frame index
     let targetIndex: number;
 
-    if (!isHomePage || isHeroCompleted) {
-      targetIndex = frameCount; // Hold final frame behind all public pages
+    if (!isHomePage || (isHeroCompleted && scrollProgress >= 0.99)) {
+      targetIndex = frameCount; // Hold final frame behind all public pages and completed post-hero sections
     } else {
       // Linear mapping of scroll progress (0.0 -> 1.0) to frame (1 -> frameCount)
       const clampedProgress = Math.min(Math.max(scrollProgress, 0), 1);
       targetIndex = Math.min(Math.max(Math.round(clampedProgress * (frameCount - 1)) + 1, 1), frameCount);
     }
+
+    activeTargetIndexRef.current = targetIndex;
+    let isCurrent = true;
 
     // Try drawing immediately if cached
     const cached = imageCacheRef.current.get(targetIndex);
@@ -193,6 +199,7 @@ export const CinematicShowroomBackground: React.FC = () => {
       // Frame not yet cached: request it, but DO NOT CLEAR CANVAS TO BLACK.
       // Retain last valid frame until new frame finishes decoding.
       loadFrame(targetIndex).then((img) => {
+        if (!isCurrent || activeTargetIndexRef.current !== targetIndex) return;
         drawImageToCanvas(img);
       }).catch(() => {
         // Keep lastRenderedImageRef unchanged
@@ -214,9 +221,15 @@ export const CinematicShowroomBackground: React.FC = () => {
         }
       }
     }
+
+    return () => {
+      isCurrent = false;
+    };
   }, [scrollProgress, isHomePage, isHeroCompleted, frameCount, isReady, prefersReducedMotion, drawImageToCanvas, loadFrame]);
 
-  const firstFrameFallback = frameSeq?.firstFrame || '/hero-frames/frame-00001.webp';
+  const fallbackPoster = (!isHomePage || (isHeroCompleted && scrollProgress >= 0.99))
+    ? (frameSeq?.finalFrame || `/hero-frames/frame-${String(frameCount).padStart(5, '0')}.webp`)
+    : (frameSeq?.firstFrame || '/hero-frames/frame-00001.webp');
 
   return (
     <div
@@ -233,7 +246,7 @@ export const CinematicShowroomBackground: React.FC = () => {
       {/* 1. First Frame Instant Poster (Protects against flash before first render) */}
       {!isReady && (
         <img
-          src={firstFrameFallback}
+          src={fallbackPoster}
           alt=""
           style={{
             position: 'absolute',
