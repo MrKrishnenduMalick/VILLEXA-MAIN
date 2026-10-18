@@ -27,12 +27,11 @@ out/
 .DS_Store
 Thumbs.db
 
-# Heavy media, video dumps, extracted frames, and scratch experiments
+# Heavy media, video dumps, and scratch experiments
 *.mp4
 *.mov
 *.avi
 *.zip
-public/hero-frames/*.webp
 optimized_frames/
 extracted_frames/
 scratch/
