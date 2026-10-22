@@ -21,7 +21,16 @@ import {
  */
 export function extractVaultPathFromUrl(url: string | null | undefined): string | null {
   if (!url || typeof url !== 'string') return null;
-  if (url.startsWith('drafts/') || url.startsWith('published/') || url.startsWith('products/')) {
+  // If it's already a relative storage path (e.g. drafts/..., published/..., products/..., videos/..., models/..., images/...)
+  if (
+    url.startsWith('drafts/') ||
+    url.startsWith('published/') ||
+    url.startsWith('products/') ||
+    url.startsWith('videos/') ||
+    url.startsWith('models/') ||
+    url.startsWith('images/') ||
+    url.startsWith('sequences/')
+  ) {
     return url;
   }
   if (!url.includes('atelier-vault/')) return null;
@@ -161,7 +170,13 @@ export const adminService = {
       // Resolve Video URL & Media
       let videoUrl = videoItem?.public_url || null;
       const videoVaultPath = videoItem?.storage_path || extractVaultPathFromUrl(videoItem?.public_url);
-      if (isDraft && videoVaultPath && signedUrlMap.get(videoVaultPath)) {
+      const isVideoStagedInVault = Boolean(
+        videoVaultPath &&
+        (!videoItem?.storage_path?.startsWith('published/videos/') ||
+          videoItem?.public_url?.includes('atelier-vault') ||
+          videoItem?.public_url?.includes('token='))
+      );
+      if ((isDraft || isVideoStagedInVault) && videoVaultPath && signedUrlMap.get(videoVaultPath)) {
         videoUrl = signedUrlMap.get(videoVaultPath)!;
       }
       const videoPosterUrl = (videoItem?.metadata as any)?.posterUrl || videoItem?.thumbnail_url || null;
@@ -169,7 +184,10 @@ export const adminService = {
         url: videoUrl || videoItem.public_url,
         storagePath: videoItem.storage_path || undefined,
         posterUrl: videoPosterUrl || undefined,
-        metadata: videoItem.metadata || undefined
+        metadata: {
+          ...(videoItem.metadata || {}),
+          isStagedInVault: isVideoStagedInVault
+        }
       } : null;
 
       return {
@@ -213,7 +231,12 @@ export const adminService = {
     });
   },
 
-  async saveProduct(form: ProductFormData): Promise<{ success: boolean; id?: string; error?: string }> {
+  async saveProduct(form: ProductFormData): Promise<{ 
+    success: boolean; 
+    id?: string; 
+    error?: string;
+    promotedVideo?: { url: string; storagePath?: string; posterUrl?: string };
+  }> {
     if (!isSupabaseConfigured) {
       return { success: false, error: 'Database is unconfigured. Connect Supabase to persist products.' };
     }
@@ -222,6 +245,7 @@ export const adminService = {
     let finalGalleryImages = form.galleryImages ? [...form.galleryImages] : undefined;
     let finalGlbModel = form.glbModel ? { ...form.glbModel } : form.glbModel;
     let finalProductVideo = form.productVideo ? { ...form.productVideo } : form.productVideo;
+    const promotedStagingVaultPaths: string[] = [];
 
     // PUBLICATION WORKFLOW:
     // If saving as published, promote assets from private vault to public showroom buckets
@@ -236,12 +260,14 @@ export const adminService = {
             if (vaultSource && !vaultSource.startsWith('http')) {
               const res = await promoteDraftToPublic(vaultSource, 'image');
               if (res.success && res.publicUrl) {
+                if (res.vaultPath) promotedStagingVaultPaths.push(res.vaultPath);
                 promoted.push({
                   url: res.publicUrl,
                   storagePath: res.publicPath,
                   metadata: {
                     ...(img.metadata || {}),
-                    draft_vault_path: res.vaultPath || vaultSource
+                    draft_vault_path: undefined,
+                    previous_vault_path: res.vaultPath || vaultSource
                   }
                 });
                 if (finalPrimaryImageUrl === img.url || (img.storagePath && finalPrimaryImageUrl?.includes(img.storagePath))) {
@@ -277,14 +303,16 @@ export const adminService = {
         if (!isAlreadyPublished) {
           if (vaultSource && !vaultSource.startsWith('http')) {
             const res = await promoteDraftToPublic(vaultSource, 'model');
-            if (res.success && res.publicUrl) {
+            if (res.success && res.publicUrl && res.publicPath) {
+              if (res.vaultPath) promotedStagingVaultPaths.push(res.vaultPath);
               finalGlbModel = {
                 ...finalGlbModel,
                 url: res.publicUrl,
                 storagePath: res.publicPath,
                 metadata: {
                   ...(finalGlbModel.metadata || {}),
-                  draft_vault_path: res.vaultPath || vaultSource
+                  draft_vault_path: undefined,
+                  previous_vault_path: res.vaultPath || vaultSource
                 }
               };
             } else {
@@ -310,11 +338,17 @@ export const adminService = {
         if (posterVaultSource && !posterVaultSource.startsWith('published/') && !posterVaultSource.startsWith('http')) {
           const posterRes = await promoteDraftToPublic(posterVaultSource, 'image');
           if (posterRes.success && posterRes.publicUrl) {
+            if (posterRes.vaultPath) promotedStagingVaultPaths.push(posterRes.vaultPath);
             finalProductVideo.posterUrl = posterRes.publicUrl;
             finalProductVideo.metadata = {
               ...(finalProductVideo.metadata || {}),
-              draft_poster_vault_path: posterRes.vaultPath || posterVaultSource,
+              draft_poster_vault_path: undefined,
               posterUrl: posterRes.publicUrl
+            };
+          } else {
+            return {
+              success: false,
+              error: `Failed to promote video thumbnail poster: ${posterRes.error || 'Unknown error'}. Product remains in draft status.`
             };
           }
         }
@@ -328,14 +362,16 @@ export const adminService = {
         if (!isAlreadyPublished) {
           if (vaultSource && !vaultSource.startsWith('http')) {
             const res = await promoteDraftToPublic(vaultSource, 'video');
-            if (res.success && res.publicUrl) {
+            if (res.success && res.publicUrl && res.publicPath) {
+              if (res.vaultPath) promotedStagingVaultPaths.push(res.vaultPath);
               finalProductVideo = {
                 ...finalProductVideo,
                 url: res.publicUrl,
                 storagePath: res.publicPath,
                 metadata: {
                   ...(finalProductVideo.metadata || {}),
-                  draft_vault_path: res.vaultPath || vaultSource
+                  draft_vault_path: undefined,
+                  previous_vault_path: res.vaultPath || vaultSource
                 }
               };
             } else {
@@ -492,7 +528,22 @@ export const adminService = {
         }
       }
 
-      return { success: true, id: savedId };
+      // Publication verified: safely remove staged files from private vault so they don't linger in atelier-vault
+      if (form.status === 'published' && promotedStagingVaultPaths.length > 0) {
+        for (const vPath of promotedStagingVaultPaths) {
+          await deleteAsset(VAULT_BUCKET, vPath);
+        }
+      }
+
+      return {
+        success: true,
+        id: savedId,
+        promotedVideo: finalProductVideo && finalProductVideo.url ? {
+          url: finalProductVideo.url,
+          storagePath: finalProductVideo.storagePath,
+          posterUrl: finalProductVideo.posterUrl
+        } : undefined
+      };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to save product';
       return { success: false, error: msg };
@@ -547,18 +598,37 @@ export const adminService = {
               if (vaultSource && !vaultSource.startsWith('http')) {
                 const uploadType = m.type === 'glb_model' ? 'model' : m.type === 'video' ? 'video' : m.type === 'sequence_frame' ? 'sequence' : 'image';
                 const res = await promoteDraftToPublic(vaultSource, uploadType);
-                if (res.success && res.publicUrl) {
+                if (res.success && res.publicUrl && res.publicPath) {
+                  // Also handle video poster thumbnail if present and in vault
+                  let promotedThumbnailUrl = m.thumbnail_url;
+                  if (m.type === 'video' && m.thumbnail_url) {
+                    const posterSource = (m.metadata as any)?.posterStoragePath || extractVaultPathFromUrl(m.thumbnail_url);
+                    if (posterSource && !posterSource.startsWith('published/') && !posterSource.startsWith('http')) {
+                      const pRes = await promoteDraftToPublic(posterSource, 'image');
+                      if (pRes.success && pRes.publicUrl) {
+                        promotedThumbnailUrl = pRes.publicUrl;
+                        await deleteAsset(VAULT_BUCKET, pRes.vaultPath || posterSource);
+                      }
+                    }
+                  }
+
                   await supabase.from('product_media').update({
                     public_url: res.publicUrl,
                     storage_path: res.publicPath,
+                    thumbnail_url: promotedThumbnailUrl,
                     metadata: {
                       ...((m.metadata as Record<string, unknown>) || {}),
-                      draft_vault_path: res.vaultPath || vaultSource
+                      draft_vault_path: undefined,
+                      previous_vault_path: res.vaultPath || vaultSource
                     }
                   }).eq('id', m.id);
+
                   if (m.type === 'image' && !promotedPrimaryUrl) {
                     promotedPrimaryUrl = res.publicUrl;
                   }
+
+                  // Verification complete and database updated: safely delete from vault
+                  await deleteAsset(VAULT_BUCKET, res.vaultPath || vaultSource);
                 } else {
                   return {
                     success: false,
@@ -594,24 +664,142 @@ export const adminService = {
             if (m.storage_path && m.storage_path.startsWith('published/')) {
               const b = m.type === 'image' ? 'product-images' : m.type === 'glb_model' ? 'product-models' : 'showroom-videos';
               await revokePublicAsset(b, m.storage_path);
-              const draftVaultPath = (m.metadata as any)?.draft_vault_path || `drafts/${m.type === 'image' ? 'images' : m.type === 'glb_model' ? 'models' : 'videos'}/${m.storage_path.split('/').pop()}`;
-              await supabase.from('product_media').update({
-                storage_path: draftVaultPath
-              }).eq('id', m.id);
             }
           }
         }
 
         const { error } = await supabase
           .from('products')
-          .update({ status: 'draft', updated_at: new Date().toISOString() })
+          .update({
+            status: 'draft',
+            updated_at: new Date().toISOString()
+          })
           .eq('id', id);
         if (error) return { success: false, error: error.message };
         return { success: true };
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Toggle publish failed';
+      const msg = err instanceof Error ? err.message : 'Publish toggle failed';
       return { success: false, error: msg };
+    }
+  },
+
+  /**
+   * SAFE RECOVERY ROUTINE:
+   * Inspects published products and product_media records for videos whose source objects
+   * still exist in atelier-vault. Safely promotes them to showroom-videos/published/videos/,
+   * verifies persistence, updates product_media with permanent public URLs and paths,
+   * and cleans up the staging copy in atelier-vault.
+   */
+  async repairPublishedProductVideos(): Promise<{
+    success: boolean;
+    scanned: number;
+    repaired: number;
+    errors: string[];
+    details: Array<{ productId: string; productName: string; oldUrl: string; newUrl: string; storagePath: string }>;
+  }> {
+    if (!isSupabaseConfigured) {
+      return { success: false, scanned: 0, repaired: 0, errors: ['Supabase is not configured'], details: [] };
+    }
+
+    try {
+      const { data: products, error: prodErr } = await supabase
+        .from('products')
+        .select('id, name, slug, status, product_media(*)')
+        .eq('status', 'published');
+
+      if (prodErr || !products) {
+        return { success: false, scanned: 0, repaired: 0, errors: [prodErr?.message || 'Failed to fetch products'], details: [] };
+      }
+
+      let repaired = 0;
+      const errors: string[] = [];
+      const details: Array<{ productId: string; productName: string; oldUrl: string; newUrl: string; storagePath: string }> = [];
+
+      for (const prod of products) {
+        const videoItems = (prod.product_media || []).filter((m: { type: string }) => m.type === 'video');
+        for (const item of videoItems) {
+          const isStagedInVault = 
+            !item.storage_path?.startsWith('published/videos/') ||
+            item.public_url.includes('atelier-vault') ||
+            item.public_url.includes('token=') ||
+            item.storage_path.includes('atelier-vault') ||
+            item.storage_path.startsWith('videos/') ||
+            item.storage_path.startsWith('drafts/videos/');
+
+          if (isStagedInVault) {
+            const vaultSource = (item.metadata as any)?.draft_vault_path || 
+                                item.storage_path || 
+                                extractVaultPathFromUrl(item.public_url);
+
+            if (!vaultSource) {
+              errors.push(`Product "${prod.name}": Could not extract vault source for video URL`);
+              continue;
+            }
+
+            const res = await promoteDraftToPublic(vaultSource, 'video');
+            if (res.success && res.publicUrl && res.publicPath) {
+              // Also promote thumbnail poster if stored in vault
+              let newPosterUrl: string | undefined = item.thumbnail_url || (item.metadata as any)?.posterUrl;
+              const posterVaultSource = (item.metadata as any)?.posterStoragePath || 
+                                        extractVaultPathFromUrl(newPosterUrl);
+              if (posterVaultSource && !posterVaultSource.startsWith('published/') && !posterVaultSource.startsWith('http')) {
+                const posterRes = await promoteDraftToPublic(posterVaultSource, 'image');
+                if (posterRes.success && posterRes.publicUrl) {
+                  newPosterUrl = posterRes.publicUrl;
+                  await deleteAsset(VAULT_BUCKET, posterRes.vaultPath || posterVaultSource);
+                }
+              }
+
+              const { error: updErr } = await supabase
+                .from('product_media')
+                .update({
+                  public_url: res.publicUrl,
+                  storage_path: res.publicPath,
+                  thumbnail_url: newPosterUrl || null,
+                  metadata: {
+                    ...((item.metadata as Record<string, unknown>) || {}),
+                    repaired_at: new Date().toISOString(),
+                    previous_vault_path: res.vaultPath || vaultSource
+                  }
+                })
+                .eq('id', item.id);
+
+              if (updErr) {
+                errors.push(`Product "${prod.name}": Failed to update product_media: ${updErr.message}`);
+                continue;
+              }
+
+              // Verified and persisted! Safely delete the staging object from atelier-vault
+              if (res.vaultPath || vaultSource) {
+                await deleteAsset(VAULT_BUCKET, res.vaultPath || vaultSource);
+              }
+
+              repaired++;
+              details.push({
+                productId: prod.id,
+                productName: prod.name,
+                oldUrl: item.public_url,
+                newUrl: res.publicUrl,
+                storagePath: res.publicPath
+              });
+            } else {
+              errors.push(`Product "${prod.name}": Promotion failed - ${res.error || 'Unknown error'}`);
+            }
+          }
+        }
+      }
+
+      return {
+        success: errors.length === 0,
+        scanned: products.length,
+        repaired,
+        errors,
+        details
+      };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Recovery routine failed';
+      return { success: false, scanned: 0, repaired: 0, errors: [msg], details: [] };
     }
   },
 

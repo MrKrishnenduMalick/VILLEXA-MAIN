@@ -93,6 +93,9 @@ export interface AssetMetadata {
 export interface UploadDraftAssetResult {
   success: boolean;
   vaultPath?: string;
+  storagePath?: string;
+  bucket?: string;
+  objectPath?: string;
   previewUrl?: string;
   metadata?: AssetMetadata;
   error?: string;
@@ -123,7 +126,12 @@ export async function uploadDraftAsset(
   const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
   const uniqueKey = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
   const folder = type === 'image' ? 'images' : type === 'model' ? 'models' : type === 'video' ? 'videos' : 'sequences';
-  const vaultPath = `${prefix}/${folder}/${uniqueKey}_${cleanFileName}`;
+  
+  // Normalize prefix to avoid duplicate folder nesting like "videos/videos/..."
+  const cleanPrefix = prefix.replace(/\/+$/, '');
+  const vaultPath = cleanPrefix.endsWith(`/${folder}`) || cleanPrefix === folder
+    ? `${cleanPrefix}/${uniqueKey}_${cleanFileName}`
+    : `${cleanPrefix}/${folder}/${uniqueKey}_${cleanFileName}`;
 
   try {
     const { error: uploadError } = await supabase.storage
@@ -146,11 +154,21 @@ export async function uploadDraftAsset(
       return { success: false, error: signError?.message || 'Failed to generate signed preview token' };
     }
 
+    const fullMetadata: AssetMetadata = {
+      ...metadata,
+      bucket: VAULT_BUCKET,
+      storagePath: vaultPath,
+      objectPath: vaultPath
+    };
+
     return {
       success: true,
       vaultPath,
+      storagePath: vaultPath,
+      bucket: VAULT_BUCKET,
+      objectPath: vaultPath,
       previewUrl: signedData.signedUrl,
-      metadata
+      metadata: fullMetadata
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Draft upload failed';
@@ -189,7 +207,11 @@ export async function assetExists(bucket: string, path: string): Promise<boolean
     const cleanPath = path.startsWith('/') ? path.substring(1) : path;
     const folder = cleanPath.includes('/') ? cleanPath.substring(0, cleanPath.lastIndexOf('/')) : '';
     const name = cleanPath.includes('/') ? cleanPath.substring(cleanPath.lastIndexOf('/') + 1) : cleanPath;
-    const { data, error } = await supabase.storage.from(bucket).list(folder, {
+    const bucketClient = supabase.storage.from(bucket);
+    if (typeof bucketClient.list !== 'function') {
+      return false;
+    }
+    const { data, error } = await bucketClient.list(folder, {
       search: name,
       limit: 10
     });
@@ -200,6 +222,15 @@ export async function assetExists(bucket: string, path: string): Promise<boolean
   }
 }
 
+export interface PromoteDraftResult {
+  success: boolean;
+  publicUrl?: string;
+  publicPath?: string;
+  vaultPath?: string;
+  alreadyExisted?: boolean;
+  error?: string;
+}
+
 /**
  * Promotes an asset from the private atelier-vault to a published showroom bucket.
  * This is called ONLY when a product is explicitly published.
@@ -207,77 +238,142 @@ export async function assetExists(bucket: string, path: string): Promise<boolean
  */
 export async function promoteDraftToPublic(
   vaultPath: string,
-  type: 'image' | 'model' | 'video' | 'sequence'
-): Promise<{ success: boolean; publicUrl?: string; publicPath?: string; vaultPath?: string; error?: string }> {
+  type: 'image' | 'model' | 'video' | 'sequence',
+  options: { deleteSourceAfterVerification?: boolean } = {}
+): Promise<PromoteDraftResult> {
   const rules = UPLOAD_LIMITS[type];
-  const fileName = vaultPath.split('/').pop() || `${Date.now()}_asset`;
-  const publicPath = `published/${fileName}`;
+  const cleanVaultPath = vaultPath.replace(/^atelier-vault\//, '').replace(/^\/+/, '');
+  const rawFileName = cleanVaultPath.split('/').pop() || `${Date.now()}_asset`;
+  const fileName = rawFileName.split('?')[0];
   const folder = type === 'image' ? 'images' : type === 'model' ? 'models' : type === 'video' ? 'videos' : 'sequences';
 
+  // Determine standard destination publicPath in published showroom bucket
+  let publicPath: string;
+  if (cleanVaultPath.startsWith(`published/${folder}/`)) {
+    publicPath = cleanVaultPath;
+  } else if (cleanVaultPath.startsWith('published/')) {
+    // Preserve backwards-compatibility if already formatted with published/
+    publicPath = cleanVaultPath;
+  } else {
+    // Standard target path: published/videos/<fileName>, published/models/<fileName>, published/images/<fileName>
+    publicPath = `published/${folder}/${fileName}`;
+  }
+
   try {
-    // 1. Resolve and download binary data from private vault
-    // Build candidate paths in atelier-vault to locate the staged asset
-    const candidatePaths: string[] = [];
-    if (!vaultPath.startsWith('published/') && !vaultPath.startsWith('http')) {
-      candidatePaths.push(vaultPath);
+    // 0. Avoid duplicate copies on retry if already verified in target showroom bucket
+    const existsInTarget = await assetExists(rules.bucket, publicPath);
+    if (existsInTarget) {
+      const { data: { publicUrl } } = supabase.storage
+        .from(rules.bucket)
+        .getPublicUrl(publicPath);
+
+      if (publicUrl) {
+        if (options.deleteSourceAfterVerification) {
+          await supabase.storage.from(VAULT_BUCKET).remove([cleanVaultPath]);
+        }
+        return {
+          success: true,
+          publicUrl,
+          publicPath,
+          vaultPath: cleanVaultPath,
+          alreadyExisted: true
+        };
+      }
     }
+
+    // Build exhaustive candidate paths in atelier-vault to locate the staged asset
+    const candidatePaths: string[] = [];
+    if (!cleanVaultPath.startsWith('http')) {
+      candidatePaths.push(cleanVaultPath);
+    }
+    candidatePaths.push(`videos/${fileName}`);
+    candidatePaths.push(`drafts/videos/${fileName}`);
     candidatePaths.push(`drafts/${folder}/${fileName}`);
     candidatePaths.push(`products/${folder}/${fileName}`);
-    candidatePaths.push(`products/images/image/${fileName}`);
+    candidatePaths.push(`products/videos/videos/${fileName}`);
     candidatePaths.push(`${folder}/${fileName}`);
     candidatePaths.push(fileName);
-    if (vaultPath.startsWith('published/')) {
-      candidatePaths.push(vaultPath);
+    if (cleanVaultPath.startsWith('published/')) {
+      candidatePaths.push(cleanVaultPath);
     }
 
-    let blob: Blob | null = null;
-    let actualVaultPath = vaultPath;
-    let lastDownloadError: string | undefined;
+    const uniqueCandidatePaths = Array.from(new Set(candidatePaths));
 
-    for (const testPath of Array.from(new Set(candidatePaths))) {
-      const { data, error } = await supabase.storage
-        .from(VAULT_BUCKET)
-        .download(testPath);
-      if (!error && data) {
-        blob = data;
-        actualVaultPath = testPath;
-        break;
+    // 1. First attempt fast, server-side copy via Supabase Storage API if supported
+    let copiedViaStorageApi = false;
+    let actualVaultPath = cleanVaultPath;
+    let lastError: string | undefined;
+
+    const vaultClient = supabase.storage.from(VAULT_BUCKET) as any;
+    if (typeof vaultClient.copy === 'function') {
+      for (const testPath of uniqueCandidatePaths) {
+        try {
+          const { data: copyData, error: copyError } = await vaultClient.copy(
+            testPath,
+            publicPath,
+            { destinationBucket: rules.bucket }
+          );
+          if (!copyError && copyData) {
+            copiedViaStorageApi = true;
+            actualVaultPath = testPath;
+            break;
+          }
+          if (copyError) {
+            lastError = copyError.message;
+          }
+        } catch (err: unknown) {
+          lastError = err instanceof Error ? err.message : String(err);
+        }
       }
-      if (error) {
-        lastDownloadError = error.message;
+    }
+
+    // 2. Fallback to download-and-upload if storage copy is unavailable or failed
+    if (!copiedViaStorageApi) {
+      let blob: Blob | null = null;
+      for (const testPath of uniqueCandidatePaths) {
+        const { data, error } = await supabase.storage
+          .from(VAULT_BUCKET)
+          .download(testPath);
+        if (!error && data) {
+          blob = data;
+          actualVaultPath = testPath;
+          break;
+        }
+        if (error) {
+          lastError = error.message;
+        }
       }
-    }
 
-    if (!blob) {
-      return {
-        success: false,
-        error: `Could not retrieve file from private vault (${VAULT_BUCKET}): ${lastDownloadError || 'File not found in vault'}`
-      };
-    }
+      if (!blob) {
+        return {
+          success: false,
+          error: `Could not retrieve file from private vault (${VAULT_BUCKET}): ${lastError || 'File not found in vault'}`
+        };
+      }
 
-    // Determine strict MIME content-type matching showroom bucket allowed_mime_types
-    const ext = ('.' + fileName.split('.').pop()?.toLowerCase());
-    let contentType = blob.type;
-    if (!contentType || contentType === 'application/octet-stream') {
-      if (ext === '.png') contentType = 'image/png';
-      else if (ext === '.webp') contentType = 'image/webp';
-      else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
-      else if (ext === '.glb') contentType = 'model/gltf-binary';
-      else if (ext === '.mp4') contentType = 'video/mp4';
-      else if (ext === '.webm') contentType = 'video/webm';
-    }
+      // Determine strict MIME content-type matching showroom bucket allowed_mime_types
+      const ext = ('.' + fileName.split('.').pop()?.toLowerCase());
+      let contentType = blob.type;
+      if (!contentType || contentType === 'application/octet-stream') {
+        if (ext === '.png') contentType = 'image/png';
+        else if (ext === '.webp') contentType = 'image/webp';
+        else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
+        else if (ext === '.glb') contentType = 'model/gltf-binary';
+        else if (ext === '.mp4') contentType = 'video/mp4';
+        else if (ext === '.webm') contentType = 'video/webm';
+      }
 
-    // 2. Upload to public showroom bucket with explicit content type
-    const { error: uploadError } = await supabase.storage
-      .from(rules.bucket)
-      .upload(publicPath, blob, {
-        cacheControl: '3600',
-        contentType,
-        upsert: true
-      });
+      const { error: uploadError } = await supabase.storage
+        .from(rules.bucket)
+        .upload(publicPath, blob, {
+          cacheControl: '3600',
+          contentType,
+          upsert: true
+        });
 
-    if (uploadError) {
-      return { success: false, error: `Upload to showroom bucket "${rules.bucket}" failed: ${uploadError.message}` };
+      if (uploadError) {
+        return { success: false, error: `Upload to showroom bucket "${rules.bucket}" failed: ${uploadError.message}` };
+      }
     }
 
     // 3. Obtain permanent CDN public URL
@@ -289,11 +385,17 @@ export async function promoteDraftToPublic(
       return { success: false, error: `Failed to generate public URL for ${publicPath} in ${rules.bucket}` };
     }
 
+    // 4. Optionally delete source after verified promotion if requested
+    if (options.deleteSourceAfterVerification && actualVaultPath) {
+      await supabase.storage.from(VAULT_BUCKET).remove([actualVaultPath]);
+    }
+
     return {
       success: true,
       publicUrl,
       publicPath,
-      vaultPath: actualVaultPath
+      vaultPath: actualVaultPath,
+      alreadyExisted: false
     };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Promotion failed';
@@ -330,6 +432,8 @@ export async function uploadAsset(
 ): Promise<{ 
   success: boolean; 
   storagePath?: string; 
+  bucket?: string;
+  objectPath?: string;
   publicUrl?: string; 
   previewUrl?: string;
   metadata?: AssetMetadata;
@@ -340,6 +444,8 @@ export async function uploadAsset(
   return {
     success: true,
     storagePath: result.vaultPath,
+    bucket: result.bucket,
+    objectPath: result.objectPath,
     publicUrl: result.previewUrl,
     previewUrl: result.previewUrl,
     metadata: result.metadata

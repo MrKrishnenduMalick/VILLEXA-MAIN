@@ -22,6 +22,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 export interface VideoMediaState {
   url: string;
   storagePath?: string;
+  bucket?: string;
+  objectPath?: string;
   posterUrl?: string;
   posterStoragePath?: string;
   metadata?: Record<string, unknown>;
@@ -253,7 +255,15 @@ export const AdminProductEditor: React.FC = () => {
         setProductVideo((prev) => ({
           url: res.publicUrl!,
           storagePath: res.storagePath,
-          metadata: res.metadata,
+          bucket: res.bucket,
+          objectPath: res.objectPath,
+          metadata: {
+            ...(res.metadata || {}),
+            bucket: res.bucket,
+            objectPath: res.objectPath,
+            size: file.size,
+            mimeType: file.type || 'video/mp4'
+          },
           posterUrl: prev?.posterUrl,
           posterStoragePath: prev?.posterStoragePath,
           isNewDraft: true
@@ -422,6 +432,15 @@ export const AdminProductEditor: React.FC = () => {
       });
 
       if (res.success) {
+        if (res.promotedVideo) {
+          setProductVideo((prev) => prev ? {
+            ...prev,
+            url: res.promotedVideo!.url,
+            storagePath: res.promotedVideo!.storagePath,
+            posterUrl: res.promotedVideo!.posterUrl || prev.posterUrl,
+            isNewDraft: false
+          } : null);
+        }
         setFeedbackMsg({ type: 'success', text: `Product saved successfully as ${finalStatus}!` });
         setTimeout(() => {
           setLocation('/admin/products');

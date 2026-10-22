@@ -44,6 +44,7 @@ export const AdminShowroomMedia: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isRepairing, setIsRepairing] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -318,16 +319,22 @@ export const AdminShowroomMedia: React.FC = () => {
 
       if (res.success) {
         setFeedback({ type: 'success', text: `Showcase video saved for product "${prod.name}"!` });
+        const finalUrl = res.promotedVideo?.url || prodVideoUrl;
+        const finalStoragePath = res.promotedVideo?.storagePath || prodVideoStoragePath;
+        const finalPosterUrl = res.promotedVideo?.posterUrl || prodPosterUrl;
+        setProdVideoUrl(finalUrl);
+        setProdVideoStoragePath(finalStoragePath);
+        setProdPosterUrl(finalPosterUrl);
         // Update local state
         setProducts((prev) =>
           prev.map((p) => (p.id === prod.id ? {
             ...p,
-            videoUrl: prodVideoUrl,
-            videoPosterUrl: prodPosterUrl,
-            videoMedia: prodVideoUrl ? {
-              url: prodVideoUrl,
-              storagePath: prodVideoStoragePath || undefined,
-              posterUrl: prodPosterUrl || undefined
+            videoUrl: finalUrl,
+            videoPosterUrl: finalPosterUrl,
+            videoMedia: finalUrl ? {
+              url: finalUrl,
+              storagePath: finalStoragePath || undefined,
+              posterUrl: finalPosterUrl || undefined
             } : null
           } : p))
         );
@@ -336,6 +343,42 @@ export const AdminShowroomMedia: React.FC = () => {
       }
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleRepairVideos = async () => {
+    setIsRepairing(true);
+    setFeedback(null);
+    try {
+      const res = await adminService.repairPublishedProductVideos();
+      if (res.success) {
+        if (res.repaired > 0) {
+          setFeedback({
+            type: 'success',
+            text: `Safe Recovery Succeeded: ${res.repaired} staged showcase video(s) promoted to showroom-videos bucket with permanent CDN URLs.`
+          });
+          const updatedProds = await adminService.getAllProducts();
+          setProducts(updatedProds);
+          const current = updatedProds.find((p) => p.id === selectedProductId);
+          if (current) {
+            setProdVideoUrl(current.videoUrl || null);
+            setProdVideoStoragePath(current.videoMedia?.storagePath || null);
+            setProdPosterUrl(current.videoPosterUrl || null);
+          }
+        } else {
+          setFeedback({
+            type: 'success',
+            text: 'All published product videos are already correctly promoted to showroom-videos CDN.'
+          });
+        }
+      } else {
+        setFeedback({
+          type: 'error',
+          text: `Recovery encountered errors: ${res.errors.join('; ')}`
+        });
+      }
+    } finally {
+      setIsRepairing(false);
     }
   };
 
@@ -706,11 +749,23 @@ export const AdminShowroomMedia: React.FC = () => {
           {/* 4. PRODUCT VIDEOS */}
           {activeSection === 'products' && (
             <div className="luxury-card" style={{ padding: 'var(--space-8)', maxWidth: '900px' }}>
-              <div style={{ marginBottom: 'var(--space-6)' }}>
-                <h3 style={{ fontSize: '1.25rem' }}>Product Showcase Videos</h3>
-                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                  Attach a cinematic material joinery or detailing clip to a specific creation.
-                </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+                <div>
+                  <h3 style={{ fontSize: '1.25rem' }}>Product Showcase Videos</h3>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                    Attach a cinematic material joinery or detailing clip to a specific creation.
+                  </p>
+                </div>
+                <button
+                  onClick={handleRepairVideos}
+                  disabled={isRepairing || isSaving}
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}
+                  title="Check existing published products and promote any videos remaining in atelier-vault to showroom-videos CDN"
+                >
+                  <Sparkles size={14} />
+                  <span>{isRepairing ? 'Scanning & Promoting...' : 'Check & Recover Staged Videos'}</span>
+                </button>
               </div>
 
               {products.length === 0 ? (
@@ -736,6 +791,43 @@ export const AdminShowroomMedia: React.FC = () => {
                       ))}
                     </select>
                   </div>
+
+                  {(() => {
+                    const selectedProd = products.find((p) => p.id === selectedProductId);
+                    const isStagedInVault = Boolean(
+                      selectedProd?.status === 'published' &&
+                      prodVideoUrl &&
+                      (prodVideoUrl.includes('atelier-vault') ||
+                        prodVideoUrl.includes('token=') ||
+                        !prodVideoStoragePath?.startsWith('published/videos/'))
+                    );
+                    if (!isStagedInVault) return null;
+                    return (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: 'var(--space-3)',
+                        padding: 'var(--space-4)',
+                        marginBottom: 'var(--space-5)',
+                        backgroundColor: 'rgba(212, 175, 55, 0.08)',
+                        border: '1px solid rgba(212, 175, 55, 0.3)',
+                        borderRadius: 'var(--radius-sm)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                          <AlertCircle size={18} color="var(--color-accent-gold)" />
+                          <div>
+                            <p style={{ fontSize: '0.85rem', fontWeight: 500, margin: 0, color: 'var(--color-text-primary)' }}>
+                              Staged Video in Vault Detected
+                            </p>
+                            <p style={{ fontSize: '0.75rem', margin: 0, color: 'var(--color-text-muted)' }}>
+                              This published creation&apos;s video is still in the staging vault. Click &ldquo;Save Product Showcase Video&rdquo; below or &ldquo;Check &amp; Recover Staged Videos&rdquo; to promote it to the permanent Showroom CDN.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {prodVideoUrl ? (
                     <div style={{ marginBottom: 'var(--space-6)' }}>
@@ -781,7 +873,7 @@ export const AdminShowroomMedia: React.FC = () => {
                           onChange={(e) => handleUploadVideo(e, (url, storagePath) => {
                             setProdVideoUrl(url);
                             setProdVideoStoragePath(storagePath || null);
-                          }, 'products/videos')}
+                          }, 'videos')}
                           style={{ display: 'none' }}
                         />
                       </label>

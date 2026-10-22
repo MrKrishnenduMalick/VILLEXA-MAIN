@@ -101,7 +101,7 @@ describe('Audited Media Fixes & 360 Feature Removal Regression Suite', () => {
     expect(res.success).toBe(true);
     expect(downloadSpy).toHaveBeenCalledWith('drafts/videos/vesper.mp4');
     expect(uploadSpy).toHaveBeenCalledWith(
-      'published/vesper.mp4',
+      'published/videos/vesper.mp4',
       fakeVideoBlob,
       expect.objectContaining({ contentType: 'video/mp4', upsert: true })
     );
@@ -131,7 +131,7 @@ describe('Audited Media Fixes & 360 Feature Removal Regression Suite', () => {
     expect(res.success).toBe(true);
     expect(downloadSpy).toHaveBeenCalledWith('drafts/models/vesper.glb');
     expect(uploadSpy).toHaveBeenCalledWith(
-      'published/vesper.glb',
+      'published/models/vesper.glb',
       fakeGlbBlob,
       expect.objectContaining({ contentType: 'model/gltf-binary', upsert: true })
     );
