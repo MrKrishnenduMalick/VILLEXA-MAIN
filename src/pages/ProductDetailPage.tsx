@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useRoute, Link } from 'wouter';
-import { ArrowLeft, Box, RotateCw, Image as ImageIcon, ShieldCheck, Truck, Sparkles, Film } from 'lucide-react';
+import { ArrowLeft, Box, Image as ImageIcon, ShieldCheck, Truck, Sparkles, Film, AlertCircle } from 'lucide-react';
 import { productService } from '../services/productService';
 import { Product } from '../types/product';
 import { EmptyState } from '../components/common/EmptyState';
@@ -15,19 +15,19 @@ export const ProductDetailPage: React.FC = () => {
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Active viewer mode: 'gallery' | 'glb_3d' | 'sequence_360' | 'video'
-  const [activeViewer, setActiveViewer] = useState<'gallery' | 'glb_3d' | 'sequence_360' | 'video'>('gallery');
+  // Active viewer mode: 'gallery' | 'glb_3d' | 'video'
+  const [activeViewer, setActiveViewer] = useState<'gallery' | 'glb_3d' | 'video'>('gallery');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [isFavorited, setIsFavorited] = useState(false);
 
-  // 360 Turntable state
-  const [currentFrameIndex, setCurrentFrameIndex] = useState(0);
-  const isDragging360 = useRef(false);
-  const dragStartX = useRef(0);
-  const dragStartFrame = useRef(0);
+  // Video playback state & error handling
+  const [videoError, setVideoError] = useState(false);
+  const [isVideoLoading, setIsVideoLoading] = useState(true);
 
-  // 3D Canvas
+  // 3D Canvas & error handling
+  const [glbError, setGlbError] = useState<string | null>(null);
+  const [isGlbLoading, setIsGlbLoading] = useState(false);
   const canvasContainerRef = useRef<HTMLDivElement | null>(null);
   const viewerEngineRef = useRef<ThreeViewerEngine | null>(null);
 
@@ -84,7 +84,8 @@ export const ProductDetailPage: React.FC = () => {
         setProduct(found);
         if (found) {
           setSelectedImage(found.primaryImageUrl || found.galleryImages?.[0] || null);
-          setActiveViewer(found.preferredViewer || 'gallery');
+          const preferred = found.preferredViewer === 'video' ? 'video' : found.preferredViewer === 'glb_3d' ? 'glb_3d' : 'gallery';
+          setActiveViewer(preferred);
         }
       } finally {
         setIsLoading(false);
@@ -102,6 +103,8 @@ export const ProductDetailPage: React.FC = () => {
 
     if (activeViewer === 'glb_3d' && product?.glbConfig?.modelUrl && canvasContainerRef.current) {
       if (!viewerEngineRef.current) {
+        setIsGlbLoading(true);
+        setGlbError(null);
         const engine = new ThreeViewerEngine(canvasContainerRef.current, {
           autoRotate: true,
           autoRotateSpeed: 1.2,
@@ -114,10 +117,13 @@ export const ProductDetailPage: React.FC = () => {
           product.glbConfig.modelUrl,
           (gltf) => {
             engine.frameModel(gltf.scene);
+            setIsGlbLoading(false);
           },
           undefined,
           (err) => {
             console.error('Failed to load 3D model in public viewer:', err);
+            setIsGlbLoading(false);
+            setGlbError('Architectural 3D model is currently unavailable or re-indexing in the showroom.');
           }
         );
       }
@@ -130,33 +136,6 @@ export const ProductDetailPage: React.FC = () => {
       }
     };
   }, [activeViewer, product]);
-
-  // 360 Mouse/Touch interactions
-  const handlePointerDown360 = (e: React.PointerEvent) => {
-    isDragging360.current = true;
-    dragStartX.current = e.clientX;
-    dragStartFrame.current = currentFrameIndex;
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  };
-
-  const handlePointerMove360 = (e: React.PointerEvent) => {
-    if (!isDragging360.current || !product?.sequence360Config?.frameUrls?.length) return;
-    const total = product.sequence360Config.frameUrls.length;
-    const deltaX = e.clientX - dragStartX.current;
-    const sensitivity = 8; // Pixels per frame shift
-    const frameDelta = Math.floor(deltaX / sensitivity);
-    const newIndex = ((dragStartFrame.current - frameDelta) % total + total) % total;
-    setCurrentFrameIndex(newIndex);
-  };
-
-  const handlePointerUp360 = (e: React.PointerEvent) => {
-    isDragging360.current = false;
-    try {
-      (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-    } catch {
-      // Ignore if pointer capture was already released
-    }
-  };
 
   if (isLoading) {
     return (
@@ -208,7 +187,6 @@ export const ProductDetailPage: React.FC = () => {
   );
 
   const has3D = Boolean(clientConfig.features.enable3DViewer && product.glbConfig?.modelUrl);
-  const has360 = Boolean(clientConfig.features.enable360Turntable && product.sequence360Config?.frameUrls?.length);
   const hasVideo = Boolean(product.videoUrl);
 
   return (
@@ -243,7 +221,7 @@ export const ProductDetailPage: React.FC = () => {
           {/* COLUMN 1: INTERACTIVE MEDIA SHOWCASE */}
           <div>
             {/* Viewer Mode Selector Pills (when multiple modes exist) */}
-            {(has3D || has360 || hasVideo) && (
+            {(has3D || hasVideo) && (
               <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-3)', flexWrap: 'wrap' }}>
                 <button
                   onClick={() => setActiveViewer('gallery')}
@@ -269,20 +247,6 @@ export const ProductDetailPage: React.FC = () => {
                   >
                     <Box size={13} />
                     <span>3D Model</span>
-                  </button>
-                )}
-                {has360 && (
-                  <button
-                    onClick={() => setActiveViewer('sequence_360')}
-                    className={`btn ${activeViewer === 'sequence_360' ? 'btn-gold' : 'btn-frosted'}`}
-                    style={{
-                      padding: '0.45rem 1rem',
-                      fontSize: '0.75rem',
-                      borderRadius: 'var(--radius-pill)'
-                    }}
-                  >
-                    <RotateCw size={13} />
-                    <span>360° Turntable</span>
                   </button>
                 )}
                 {hasVideo && (
@@ -371,88 +335,145 @@ export const ProductDetailPage: React.FC = () => {
               {activeViewer === 'glb_3d' && (
                 <div style={{ width: '100%', height: '440px', position: 'relative' }}>
                   <div ref={canvasContainerRef} style={{ width: '100%', height: '100%' }} />
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '12px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'rgba(18, 15, 13, 0.85)',
-                    border: '1px solid rgba(255, 255, 255, 0.18)',
-                    padding: '4px 14px',
-                    borderRadius: 'var(--radius-pill)',
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: 'rgba(255, 255, 255, 0.85)',
-                    pointerEvents: 'none'
-                  }}>
-                    Drag to rotate • Scroll to zoom
-                  </div>
-                </div>
-              )}
 
-              {/* Mode C: Interactive 360 Photographic Turntable */}
-              {activeViewer === 'sequence_360' && product.sequence360Config?.frameUrls && (
-                <div
-                  onPointerDown={handlePointerDown360}
-                  onPointerMove={handlePointerMove360}
-                  onPointerUp={handlePointerUp360}
-                  style={{
-                    width: '100%',
-                    height: '440px',
-                    position: 'relative',
-                    cursor: 'ew-resize',
-                    userSelect: 'none',
-                    touchAction: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  <img
-                    src={product.sequence360Config.frameUrls[currentFrameIndex]}
-                    alt={`360 Turntable Frame ${currentFrameIndex + 1}`}
-                    style={{
-                      maxWidth: '92%',
-                      maxHeight: '420px',
-                      objectFit: 'contain',
-                      pointerEvents: 'none',
-                      filter: 'drop-shadow(0 20px 30px rgba(0,0,0,0.65))'
-                    }}
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '12px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    background: 'rgba(18, 15, 13, 0.85)',
-                    border: '1px solid rgba(255, 255, 255, 0.18)',
-                    padding: '4px 14px',
-                    borderRadius: 'var(--radius-pill)',
-                    fontSize: '0.7rem',
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    color: 'rgba(255, 255, 255, 0.85)',
-                    pointerEvents: 'none'
-                  }}>
-                    Drag horizontally to rotate 360° ({currentFrameIndex + 1}/{product.sequence360Config.frameCount})
-                  </div>
+                  {isGlbLoading && (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'rgba(18, 15, 13, 0.75)',
+                      backdropFilter: 'blur(4px)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#ffffff',
+                      fontSize: '0.85rem',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase'
+                    }}>
+                      Loading 3D Model...
+                    </div>
+                  )}
+
+                  {glbError ? (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'rgba(18, 15, 13, 0.92)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 'var(--space-6)',
+                      textAlign: 'center'
+                    }}>
+                      <AlertCircle size={32} color="var(--color-accent-gold)" style={{ marginBottom: 'var(--space-3)' }} />
+                      <p style={{ fontSize: '0.9rem', color: '#ffffff', marginBottom: 'var(--space-2)' }}>
+                        3D Architectural Model Unavailable
+                      </p>
+                      <p style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.65)', maxWidth: '360px', marginBottom: 'var(--space-4)' }}>
+                        {glbError}
+                      </p>
+                      <button
+                        onClick={() => setActiveViewer('gallery')}
+                        className="btn btn-frosted"
+                        style={{ padding: '0.45rem 1.2rem', fontSize: '0.75rem', borderRadius: 'var(--radius-pill)' }}
+                      >
+                        Return to Photography Gallery
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '12px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'rgba(18, 15, 13, 0.85)',
+                      border: '1px solid rgba(255, 255, 255, 0.18)',
+                      padding: '4px 14px',
+                      borderRadius: 'var(--radius-pill)',
+                      fontSize: '0.7rem',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: 'rgba(255, 255, 255, 0.85)',
+                      pointerEvents: 'none'
+                    }}>
+                      Drag to rotate • Scroll to zoom
+                    </div>
+                  )}
                 </div>
               )}
 
               {/* Mode D: Showcase Video Player */}
               {activeViewer === 'video' && product.videoUrl && (
-                <div style={{ width: '100%', height: '440px', backgroundColor: '#000', borderRadius: '14px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <video
-                    src={product.videoUrl}
-                    poster={product.videoPosterUrl || product.primaryImageUrl || undefined}
-                    controls
-                    autoPlay
-                    muted
-                    playsInline
-                    loop
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                  />
+                <div style={{ width: '100%', height: '440px', backgroundColor: '#000', borderRadius: '14px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                  {videoError ? (
+                    <div style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'rgba(18, 15, 13, 0.95)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: 'var(--space-6)',
+                      textAlign: 'center',
+                      zIndex: 2
+                    }}>
+                      <Film size={32} color="var(--color-accent-gold)" style={{ marginBottom: 'var(--space-3)' }} />
+                      <p style={{ fontSize: '0.9rem', color: '#ffffff', marginBottom: 'var(--space-2)' }}>
+                        Showcase Video Unavailable
+                      </p>
+                      <p style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.65)', maxWidth: '360px', marginBottom: 'var(--space-4)' }}>
+                        The video file could not be loaded or played. You may inspect the creation via the high-resolution photo gallery.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setVideoError(false);
+                          setActiveViewer('gallery');
+                        }}
+                        className="btn btn-frosted"
+                        style={{ padding: '0.45rem 1.2rem', fontSize: '0.75rem', borderRadius: 'var(--radius-pill)' }}
+                      >
+                        Return to Photo Gallery
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <video
+                        src={product.videoUrl}
+                        poster={product.videoPosterUrl || product.primaryImageUrl || undefined}
+                        controls
+                        autoPlay
+                        muted
+                        playsInline
+                        loop
+                        onLoadedMetadata={() => setIsVideoLoading(false)}
+                        onCanPlay={() => setIsVideoLoading(false)}
+                        onError={() => {
+                          console.warn('Video failed to load from URL:', product.videoUrl);
+                          setVideoError(true);
+                          setIsVideoLoading(false);
+                        }}
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      />
+                      {isVideoLoading && (
+                        <div style={{
+                          position: 'absolute',
+                          bottom: '16px',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          background: 'rgba(18, 15, 13, 0.85)',
+                          padding: '4px 14px',
+                          borderRadius: 'var(--radius-pill)',
+                          fontSize: '0.7rem',
+                          color: '#ffffff',
+                          pointerEvents: 'none'
+                        }}>
+                          Loading Showcase Video...
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
 

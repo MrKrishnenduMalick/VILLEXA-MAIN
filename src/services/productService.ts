@@ -18,7 +18,7 @@ export const productService = {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*, categories(*), collections(*), product_media(*), product_sequences_360(*)')
+        .select('*, categories(*), collections(*), product_media(*)')
         .eq('status', 'published')
         .order('sort_order', { ascending: true });
 
@@ -49,19 +49,22 @@ export const productService = {
         galleryMedia: item.product_media?.filter((m: { type: string }) => m.type === 'image').map((m: { public_url: string; storage_path?: string; metadata?: any }) => ({ url: m.public_url, storagePath: m.storage_path, metadata: m.metadata })) || [],
         videoUrl: item.product_media?.find((m: { type: string }) => m.type === 'video')?.public_url || null,
         videoPosterUrl: (item.product_media?.find((m: { type: string }) => m.type === 'video')?.metadata as any)?.posterUrl || item.product_media?.find((m: { type: string }) => m.type === 'video')?.thumbnail_url || null,
-        preferredViewer: (item.preferred_viewer === 'video' || item.product_media?.some((m: { type: string; metadata?: any }) => m.type === 'video' && m.metadata?.is_preferred_viewer)) ? 'video' : (item.preferred_viewer || 'gallery'),
+        videoMedia: item.product_media?.find((m: { type: string }) => m.type === 'video') ? {
+          url: item.product_media.find((m: { type: string }) => m.type === 'video').public_url,
+          storagePath: item.product_media.find((m: { type: string }) => m.type === 'video').storage_path,
+          posterUrl: (item.product_media.find((m: { type: string }) => m.type === 'video').metadata as any)?.posterUrl || item.product_media.find((m: { type: string }) => m.type === 'video').thumbnail_url || undefined,
+          metadata: item.product_media.find((m: { type: string }) => m.type === 'video').metadata
+        } : null,
+        preferredViewer: (item.preferred_viewer === 'video' || item.product_media?.some((m: { type: string; metadata?: any }) => m.type === 'video' && m.metadata?.is_preferred_viewer)) ? 'video' : (item.preferred_viewer === 'glb_3d' ? 'glb_3d' : 'gallery'),
         glbConfig: item.product_media?.find((m: { type: string }) => m.type === 'glb_model') ? {
           modelUrl: item.product_media.find((m: { type: string }) => m.type === 'glb_model').public_url,
           autoRotate: true
         } : undefined,
-        sequence360Config: item.product_sequences_360?.length > 0 ? {
-          frameCount: item.product_sequences_360.length,
-          initialFrame: 0,
-          rotationDirection: 'clockwise',
-          frameUrls: [...item.product_sequences_360]
-            .sort((a: { frame_index: number }, b: { frame_index: number }) => a.frame_index - b.frame_index)
-            .map((f: { public_url: string }) => f.public_url)
-        } : undefined,
+        glbMedia: item.product_media?.find((m: { type: string }) => m.type === 'glb_model') ? {
+          url: item.product_media.find((m: { type: string }) => m.type === 'glb_model').public_url,
+          storagePath: item.product_media.find((m: { type: string }) => m.type === 'glb_model').storage_path,
+          metadata: item.product_media.find((m: { type: string }) => m.type === 'glb_model').metadata
+        } : null,
         tags: item.tags || [],
         isFeatured: item.is_featured ?? false,
         sortOrder: item.sort_order ?? 0,
@@ -86,7 +89,7 @@ export const productService = {
     try {
       const { data, error } = await supabase
         .from('products')
-        .select('*, categories(*), collections(*), product_media(*), product_sequences_360(*)')
+        .select('*, categories(*), collections(*), product_media(*)')
         .eq('slug', slug)
         .eq('status', 'published')
         .maybeSingle();
@@ -118,19 +121,22 @@ export const productService = {
         galleryMedia: data.product_media?.filter((m: { type: string }) => m.type === 'image').map((m: { public_url: string; storage_path?: string; metadata?: any }) => ({ url: m.public_url, storagePath: m.storage_path, metadata: m.metadata })) || [],
         videoUrl: data.product_media?.find((m: { type: string }) => m.type === 'video')?.public_url || null,
         videoPosterUrl: (data.product_media?.find((m: { type: string }) => m.type === 'video')?.metadata as any)?.posterUrl || data.product_media?.find((m: { type: string }) => m.type === 'video')?.thumbnail_url || null,
-        preferredViewer: (data.preferred_viewer === 'video' || data.product_media?.some((m: { type: string; metadata?: any }) => m.type === 'video' && m.metadata?.is_preferred_viewer)) ? 'video' : (data.preferred_viewer || 'gallery'),
+        videoMedia: data.product_media?.find((m: { type: string }) => m.type === 'video') ? {
+          url: data.product_media.find((m: { type: string }) => m.type === 'video').public_url,
+          storagePath: data.product_media.find((m: { type: string }) => m.type === 'video').storage_path,
+          posterUrl: (data.product_media.find((m: { type: string }) => m.type === 'video').metadata as any)?.posterUrl || data.product_media.find((m: { type: string }) => m.type === 'video').thumbnail_url || undefined,
+          metadata: data.product_media.find((m: { type: string }) => m.type === 'video').metadata
+        } : null,
+        preferredViewer: (data.preferred_viewer === 'video' || data.product_media?.some((m: { type: string; metadata?: any }) => m.type === 'video' && m.metadata?.is_preferred_viewer)) ? 'video' : (data.preferred_viewer === 'glb_3d' ? 'glb_3d' : 'gallery'),
         glbConfig: data.product_media?.find((m: { type: string }) => m.type === 'glb_model') ? {
           modelUrl: data.product_media.find((m: { type: string }) => m.type === 'glb_model').public_url,
           autoRotate: true
         } : undefined,
-        sequence360Config: data.product_sequences_360?.length > 0 ? {
-          frameCount: data.product_sequences_360.length,
-          initialFrame: 0,
-          rotationDirection: 'clockwise',
-          frameUrls: [...data.product_sequences_360]
-            .sort((a: { frame_index: number }, b: { frame_index: number }) => a.frame_index - b.frame_index)
-            .map((f: { public_url: string }) => f.public_url)
-        } : undefined,
+        glbMedia: data.product_media?.find((m: { type: string }) => m.type === 'glb_model') ? {
+          url: data.product_media.find((m: { type: string }) => m.type === 'glb_model').public_url,
+          storagePath: data.product_media.find((m: { type: string }) => m.type === 'glb_model').storage_path,
+          metadata: data.product_media.find((m: { type: string }) => m.type === 'glb_model').metadata
+        } : null,
         tags: data.tags || [],
         isFeatured: data.is_featured ?? false,
         sortOrder: data.sort_order ?? 0,

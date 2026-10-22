@@ -36,7 +36,9 @@ export const AdminShowroomMedia: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProductId, setSelectedProductId] = useState<string>('');
   const [prodVideoUrl, setProdVideoUrl] = useState<string | null>(null);
+  const [prodVideoStoragePath, setProdVideoStoragePath] = useState<string | null>(null);
   const [prodPosterUrl, setProdPosterUrl] = useState<string | null>(null);
+  const [prodPosterStoragePath, setProdPosterStoragePath] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -67,7 +69,9 @@ export const AdminShowroomMedia: React.FC = () => {
         if (prods.length > 0) {
           setSelectedProductId(prods[0].id);
           setProdVideoUrl(prods[0].videoUrl || null);
+          setProdVideoStoragePath(prods[0].videoMedia?.storagePath || null);
           setProdPosterUrl(prods[0].videoPosterUrl || null);
+          setProdPosterStoragePath((prods[0].videoMedia?.metadata as any)?.posterStoragePath || null);
         }
       } finally {
         setIsLoading(false);
@@ -90,14 +94,16 @@ export const AdminShowroomMedia: React.FC = () => {
     setSelectedProductId(prodId);
     const prod = products.find((p) => p.id === prodId);
     setProdVideoUrl(prod?.videoUrl || null);
+    setProdVideoStoragePath(prod?.videoMedia?.storagePath || null);
     setProdPosterUrl(prod?.videoPosterUrl || null);
+    setProdPosterStoragePath((prod?.videoMedia?.metadata as any)?.posterStoragePath || null);
     setFeedback(null);
   };
 
   // Generic video upload helper
   const handleUploadVideo = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    onSuccess: (url: string) => void,
+    onSuccess: (url: string, storagePath?: string) => void,
     folder: string
   ) => {
     const file = e.target.files?.[0];
@@ -114,7 +120,7 @@ export const AdminShowroomMedia: React.FC = () => {
     try {
       const res = await uploadAsset(file, 'video', folder);
       if (res.success && res.publicUrl) {
-        onSuccess(res.publicUrl);
+        onSuccess(res.publicUrl, res.storagePath);
         setFeedback({ type: 'success', text: 'Video uploaded and verified successfully!' });
       } else {
         setFeedback({ type: 'error', text: res.error || 'Failed to upload video.' });
@@ -193,7 +199,7 @@ export const AdminShowroomMedia: React.FC = () => {
   // Generic poster upload helper for collections and products
   const handleUploadPoster = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    onSuccess: (url: string) => void,
+    onSuccess: (url: string, storagePath?: string) => void,
     folder: string
   ) => {
     const file = e.target.files?.[0];
@@ -210,7 +216,7 @@ export const AdminShowroomMedia: React.FC = () => {
     try {
       const res = await uploadAsset(file, 'image', folder);
       if (res.success && res.publicUrl) {
-        onSuccess(res.publicUrl);
+        onSuccess(res.publicUrl, res.storagePath);
         setFeedback({ type: 'success', text: 'Video thumbnail uploaded successfully!' });
       } else {
         setFeedback({ type: 'error', text: res.error || 'Failed to upload thumbnail.' });
@@ -298,14 +304,32 @@ export const AdminShowroomMedia: React.FC = () => {
         isFeatured: prod.isFeatured,
         sortOrder: prod.sortOrder,
         status: prod.status,
-        productVideo: prodVideoUrl ? { url: prodVideoUrl, posterUrl: prodPosterUrl || undefined } : null
+        galleryImages: prod.galleryMedia || prod.galleryImages?.map((url) => ({ url })),
+        glbModel: prod.glbMedia || (prod.glbConfig?.modelUrl ? { url: prod.glbConfig.modelUrl } : null),
+        productVideo: prodVideoUrl ? {
+          url: prodVideoUrl,
+          storagePath: prodVideoStoragePath || undefined,
+          posterUrl: prodPosterUrl || undefined,
+          metadata: {
+            ...(prodPosterStoragePath ? { posterStoragePath: prodPosterStoragePath } : {})
+          }
+        } : null
       });
 
       if (res.success) {
         setFeedback({ type: 'success', text: `Showcase video saved for product "${prod.name}"!` });
         // Update local state
         setProducts((prev) =>
-          prev.map((p) => (p.id === prod.id ? { ...p, videoUrl: prodVideoUrl, videoPosterUrl: prodPosterUrl } : p))
+          prev.map((p) => (p.id === prod.id ? {
+            ...p,
+            videoUrl: prodVideoUrl,
+            videoPosterUrl: prodPosterUrl,
+            videoMedia: prodVideoUrl ? {
+              url: prodVideoUrl,
+              storagePath: prodVideoStoragePath || undefined,
+              posterUrl: prodPosterUrl || undefined
+            } : null
+          } : p))
         );
       } else {
         setFeedback({ type: 'error', text: res.error || 'Failed to save product video.' });
@@ -754,7 +778,10 @@ export const AdminShowroomMedia: React.FC = () => {
                           type="file"
                           accept="video/mp4,video/webm"
                           disabled={isUploading}
-                          onChange={(e) => handleUploadVideo(e, (url) => setProdVideoUrl(url), 'products/videos')}
+                          onChange={(e) => handleUploadVideo(e, (url, storagePath) => {
+                            setProdVideoUrl(url);
+                            setProdVideoStoragePath(storagePath || null);
+                          }, 'products/videos')}
                           style={{ display: 'none' }}
                         />
                       </label>
@@ -771,7 +798,10 @@ export const AdminShowroomMedia: React.FC = () => {
                           type="file"
                           accept="image/jpeg,image/png,image/webp"
                           disabled={isUploading}
-                          onChange={(e) => handleUploadPoster(e, (url) => setProdPosterUrl(url), 'products/posters')}
+                          onChange={(e) => handleUploadPoster(e, (url, storagePath) => {
+                            setProdPosterUrl(url);
+                            setProdPosterStoragePath(storagePath || null);
+                          }, 'products/posters')}
                           style={{ display: 'none' }}
                         />
                       </label>

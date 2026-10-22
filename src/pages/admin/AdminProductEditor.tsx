@@ -7,7 +7,6 @@ import {
   Trash2, 
   Check, 
   Box, 
-  RotateCw, 
   Image as ImageIcon,
   AlertCircle,
   Eye,
@@ -20,6 +19,22 @@ import { Collection } from '../../types/collection';
 import { ThreeViewerEngine } from '../../services/viewer/threeViewerEngine';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
+export interface VideoMediaState {
+  url: string;
+  storagePath?: string;
+  posterUrl?: string;
+  posterStoragePath?: string;
+  metadata?: Record<string, unknown>;
+  isNewDraft?: boolean;
+}
+
+export interface GlbMediaState {
+  url: string;
+  storagePath?: string;
+  metadata?: Record<string, unknown>;
+  isNewDraft?: boolean;
+}
+
 export const AdminProductEditor: React.FC = () => {
   const [, params] = useRoute('/admin/products/:id');
   const [, setLocation] = useLocation();
@@ -28,7 +43,7 @@ export const AdminProductEditor: React.FC = () => {
 
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
-  const [activeTab, setActiveTab] = useState<'details' | 'media' | 'video' | 'viewer3d' | 'viewer360'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'media' | 'video' | 'viewer3d'>('details');
   const [isSaving, setIsSaving] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -63,21 +78,15 @@ export const AdminProductEditor: React.FC = () => {
   const [uploadedImages, setUploadedImages] = useState<Array<{ url: string; storagePath?: string; metadata?: Record<string, unknown> }>>([]);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
-  // Product Video State
-  const [productVideoUrl, setProductVideoUrl] = useState<string | null>(null);
-  const [productVideoPosterUrl, setProductVideoPosterUrl] = useState<string | null>(null);
+  // Product Video State (Preserving storagePath and draft status)
+  const [productVideo, setProductVideo] = useState<VideoMediaState | null>(null);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
 
-  // 3D Model State
-  const [glbModelUrl, setGlbModelUrl] = useState<string | null>(null);
+  // 3D Model State (Preserving storagePath and draft status)
+  const [glbModel, setGlbModel] = useState<GlbMediaState | null>(null);
   const [isUploadingGlb, setIsUploadingGlb] = useState(false);
   const previewCanvasRef = useRef<HTMLDivElement>(null);
   const viewerEngineRef = useRef<ThreeViewerEngine | null>(null);
-
-  // 360 Sequences State
-  const [sequenceFrames, setSequenceFrames] = useState<string[]>([]);
-  const [isUploadingSequence, setIsUploadingSequence] = useState(false);
-  const [previewFrameIndex360, setPreviewFrameIndex360] = useState(0);
 
   useEffect(() => {
     async function loadInitial() {
@@ -125,20 +134,37 @@ export const AdminProductEditor: React.FC = () => {
           }
 
           // Initialize 3D model if present
-          if (found.glbConfig?.modelUrl) {
-            setGlbModelUrl(found.glbConfig.modelUrl);
+          if (found.glbMedia) {
+            setGlbModel({
+              url: found.glbMedia.url,
+              storagePath: found.glbMedia.storagePath,
+              metadata: found.glbMedia.metadata,
+              isNewDraft: false
+            });
+            setTimeout(() => mount3DPreview(found.glbMedia!.url), 150);
+          } else if (found.glbConfig?.modelUrl) {
+            setGlbModel({
+              url: found.glbConfig.modelUrl,
+              isNewDraft: false
+            });
             setTimeout(() => mount3DPreview(found.glbConfig!.modelUrl), 150);
           }
 
-          // Initialize 360 frames if present
-          if (found.sequence360Config?.frameUrls) {
-            setSequenceFrames(found.sequence360Config.frameUrls);
-          }
-
           // Initialize video if present
-          if (found.videoUrl) {
-            setProductVideoUrl(found.videoUrl);
-            setProductVideoPosterUrl(found.videoPosterUrl || null);
+          if (found.videoMedia) {
+            setProductVideo({
+              url: found.videoMedia.url,
+              storagePath: found.videoMedia.storagePath,
+              posterUrl: found.videoMedia.posterUrl,
+              metadata: found.videoMedia.metadata,
+              isNewDraft: false
+            });
+          } else if (found.videoUrl) {
+            setProductVideo({
+              url: found.videoUrl,
+              posterUrl: found.videoPosterUrl || undefined,
+              isNewDraft: false
+            });
           }
         }
       }
@@ -224,7 +250,14 @@ export const AdminProductEditor: React.FC = () => {
     try {
       const res = await uploadAsset(file, 'video', 'drafts');
       if (res.success && res.publicUrl) {
-        setProductVideoUrl(res.publicUrl);
+        setProductVideo((prev) => ({
+          url: res.publicUrl!,
+          storagePath: res.storagePath,
+          metadata: res.metadata,
+          posterUrl: prev?.posterUrl,
+          posterStoragePath: prev?.posterStoragePath,
+          isNewDraft: true
+        }));
         setFeedbackMsg({ type: 'success', text: 'Product showcase video uploaded successfully!' });
       } else {
         setFeedbackMsg({ type: 'error', text: res.error || 'Failed to upload video' });
@@ -250,7 +283,16 @@ export const AdminProductEditor: React.FC = () => {
     try {
       const res = await uploadAsset(file, 'image', 'drafts');
       if (res.success && res.publicUrl) {
-        setProductVideoPosterUrl(res.publicUrl);
+        setProductVideo((prev) => prev ? {
+          ...prev,
+          posterUrl: res.publicUrl!,
+          posterStoragePath: res.storagePath
+        } : {
+          url: '',
+          posterUrl: res.publicUrl!,
+          posterStoragePath: res.storagePath,
+          isNewDraft: true
+        });
         setFeedbackMsg({ type: 'success', text: 'Video thumbnail poster uploaded!' });
       } else {
         setFeedbackMsg({ type: 'error', text: res.error || 'Failed to upload poster' });
@@ -279,11 +321,17 @@ export const AdminProductEditor: React.FC = () => {
     try {
       const res = await uploadAsset(file, 'model', 'drafts');
       if (res.success && res.publicUrl) {
-        setGlbModelUrl(res.publicUrl);
+        setGlbModel({
+          url: res.publicUrl!,
+          storagePath: res.storagePath,
+          metadata: res.metadata,
+          isNewDraft: true
+        });
         setFormData((prev) => ({ ...prev, preferredViewer: 'glb_3d' }));
 
         // Mount and test in preview viewer
-        mount3DPreview(res.publicUrl);
+        mount3DPreview(res.publicUrl!);
+        setFeedbackMsg({ type: 'success', text: '3D GLB model uploaded successfully!' });
       } else {
         setFeedbackMsg({ type: 'error', text: res.error || 'Failed to upload GLB model' });
       }
@@ -326,37 +374,6 @@ export const AdminProductEditor: React.FC = () => {
     );
   };
 
-  // 360 Sequences Upload Handler
-  const handleSequenceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    setIsUploadingSequence(true);
-    setFeedbackMsg(null);
-
-    try {
-      const uploadedUrls: string[] = [];
-      // Sort alphabetically by filename (frame_01, frame_02, etc.)
-      const sortedFiles = Array.from(files).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
-
-      for (const file of sortedFiles) {
-        const res = await uploadAsset(file, 'sequence', 'drafts');
-        if (res.success && res.publicUrl) {
-          uploadedUrls.push(res.publicUrl);
-        } else {
-          setFeedbackMsg({ type: 'error', text: res.error || `Failed to upload frame "${file.name}"` });
-          break;
-        }
-      }
-
-      setSequenceFrames((prev) => [...prev, ...uploadedUrls]);
-      setFormData((prev) => ({ ...prev, preferredViewer: 'sequence_360' }));
-    } finally {
-      setIsUploadingSequence(false);
-      e.target.value = '';
-    }
-  };
-
   // Save / Publish
   const handleSave = async (targetStatus?: 'draft' | 'published') => {
     // Validation
@@ -388,9 +405,20 @@ export const AdminProductEditor: React.FC = () => {
         ...formData,
         status: finalStatus,
         galleryImages: uploadedImages,
-        glbModel: glbModelUrl ? { url: glbModelUrl } : null,
-        sequenceFrames: sequenceFrames.map((url) => ({ url })),
-        productVideo: productVideoUrl ? { url: productVideoUrl, posterUrl: productVideoPosterUrl || undefined } : null
+        glbModel: glbModel && glbModel.url ? {
+          url: glbModel.url,
+          storagePath: glbModel.storagePath,
+          metadata: glbModel.metadata
+        } : null,
+        productVideo: productVideo && productVideo.url ? {
+          url: productVideo.url,
+          storagePath: productVideo.storagePath,
+          posterUrl: productVideo.posterUrl,
+          metadata: {
+            ...(productVideo.metadata || {}),
+            ...(productVideo.posterStoragePath ? { posterStoragePath: productVideo.posterStoragePath } : {})
+          }
+        } : null
       });
 
       if (res.success) {
@@ -536,7 +564,7 @@ export const AdminProductEditor: React.FC = () => {
             borderBottom: activeTab === 'video' ? '2px solid var(--color-accent-gold)' : '2px solid transparent'
           }}
         >
-          Showcase Video {productVideoUrl && '✓'}
+          Showcase Video {productVideo?.url && '✓'}
         </button>
         <button
           onClick={() => setActiveTab('viewer3d')}
@@ -553,24 +581,7 @@ export const AdminProductEditor: React.FC = () => {
             borderBottom: activeTab === 'viewer3d' ? '2px solid var(--color-accent-gold)' : '2px solid transparent'
           }}
         >
-          3D GLB Model {glbModelUrl && '✓'}
-        </button>
-        <button
-          onClick={() => setActiveTab('viewer360')}
-          style={{
-            padding: 'var(--space-3) var(--space-4)',
-            background: 'transparent',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '0.85rem',
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            fontWeight: activeTab === 'viewer360' ? 500 : 400,
-            color: activeTab === 'viewer360' ? 'var(--color-accent-gold)' : 'var(--color-text-secondary)',
-            borderBottom: activeTab === 'viewer360' ? '2px solid var(--color-accent-gold)' : '2px solid transparent'
-          }}
-        >
-          360° Sequence ({sequenceFrames.length})
+          3D GLB Model {glbModel?.url && '✓'}
         </button>
       </div>
 
@@ -870,7 +881,6 @@ export const AdminProductEditor: React.FC = () => {
               >
                 <option value="gallery">Standard High-Res Gallery</option>
                 <option value="glb_3d">Interactive 3D GLB Model Viewer</option>
-                <option value="sequence_360">360-Degree Photographic Turntable</option>
                 <option value="video">Showcase Video</option>
               </select>
             </div>
@@ -997,22 +1007,22 @@ export const AdminProductEditor: React.FC = () => {
             </p>
           </div>
 
-          {productVideoUrl ? (
+          {productVideo && productVideo.url ? (
             <div style={{ marginBottom: 'var(--space-6)', maxWidth: '640px' }}>
               <video
-                src={productVideoUrl}
-                poster={productVideoPosterUrl || undefined}
+                src={productVideo.url}
+                poster={productVideo.posterUrl || undefined}
                 controls
                 playsInline
                 style={{ width: '100%', maxHeight: '360px', backgroundColor: '#000', border: '1px solid var(--color-border-subtle)' }}
               />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-2)' }}>
                 <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
-                  {productVideoUrl}
+                  {productVideo.storagePath ? `Storage: ${productVideo.storagePath}` : productVideo.url}
                 </span>
                 <button
                   type="button"
-                  onClick={() => { setProductVideoUrl(null); setProductVideoPosterUrl(null); }}
+                  onClick={() => setProductVideo(null)}
                   style={{ background: 'transparent', border: 'none', color: '#b31d28', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
                   <Trash2 size={13} />
@@ -1091,7 +1101,7 @@ export const AdminProductEditor: React.FC = () => {
             </label>
           </div>
 
-          {glbModelUrl ? (
+          {glbModel && glbModel.url ? (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-8)' }}>
               <div>
                 <div
@@ -1107,14 +1117,14 @@ export const AdminProductEditor: React.FC = () => {
                 <div style={{ padding: 'var(--space-4)', backgroundColor: 'var(--color-bg-secondary)', fontSize: '0.85rem' }}>
                   <strong>Verified Model Source:</strong>
                   <div style={{ fontFamily: 'monospace', wordBreak: 'break-all', fontSize: '0.75rem', marginTop: '4px' }}>
-                    {glbModelUrl}
+                    {glbModel.storagePath ? `Storage: ${glbModel.storagePath}` : glbModel.url}
                   </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => {
-                    setGlbModelUrl(null);
+                    setGlbModel(null);
                     if (viewerEngineRef.current) viewerEngineRef.current.dispose();
                   }}
                   className="btn btn-secondary"
@@ -1132,109 +1142,6 @@ export const AdminProductEditor: React.FC = () => {
               <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
                 When absent, the public site falls back gracefully to the standard product photography gallery.
               </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 5: 360° SEQUENCE VIEWER */}
-      {activeTab === 'viewer360' && (
-        <div className="luxury-card" style={{ padding: 'var(--space-8)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-6)' }}>
-            <div>
-              <h3 style={{ fontSize: '1.25rem' }}>360-Degree Photographic Turntable Sequence</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
-                Upload ordered series of photographs (e.g. frame_01.webp to frame_24.webp).
-              </p>
-            </div>
-            <label className="btn btn-primary" style={{ padding: '0.6rem 1.25rem', cursor: 'pointer' }}>
-              <RotateCw size={14} />
-              <span>{isUploadingSequence ? 'Uploading Frames...' : 'Upload Sequence Frames'}</span>
-              <input
-                type="file"
-                multiple
-                accept="image/jpeg,image/webp,image/png"
-                disabled={isUploadingSequence}
-                onChange={handleSequenceUpload}
-                style={{ display: 'none' }}
-              />
-            </label>
-          </div>
-
-          {sequenceFrames.length === 0 ? (
-            <div style={{ padding: 'var(--space-16)', border: '2px dashed var(--color-border-medium)', textAlign: 'center' }}>
-              <RotateCw size={36} color="var(--color-text-muted)" style={{ margin: '0 auto var(--space-3)' }} />
-              <p style={{ fontSize: '0.9rem' }}>No 360-degree turntable frames uploaded for this piece.</p>
-            </div>
-          ) : (
-            <div>
-              {/* Interactive Scrubber Test Stage */}
-              <div style={{ marginBottom: 'var(--space-6)', maxWidth: '520px' }}>
-                <span className="kicker" style={{ marginBottom: 'var(--space-2)', display: 'block' }}>
-                  Interactive 360° Scrub Preview ({previewFrameIndex360 + 1}/{sequenceFrames.length})
-                </span>
-                <div style={{ height: '340px', backgroundColor: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <img
-                    src={sequenceFrames[previewFrameIndex360] || sequenceFrames[0]}
-                    alt={`Scrub Frame ${previewFrameIndex360 + 1}`}
-                    style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
-                  />
-                </div>
-                <div style={{ marginTop: 'var(--space-3)' }}>
-                  <input
-                    type="range"
-                    min={0}
-                    max={sequenceFrames.length - 1}
-                    value={previewFrameIndex360}
-                    onChange={(e) => setPreviewFrameIndex360(parseInt(e.target.value, 10))}
-                    style={{ width: '100%', cursor: 'ew-resize' }}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
-                    <span>Frame 1</span>
-                    <span>Drag slider to test rotation</span>
-                    <span>Frame {sequenceFrames.length}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
-                <span className="badge badge-gold">{sequenceFrames.length} Ordered Frames</span>
-                <button
-                  type="button"
-                  onClick={() => setSequenceFrames([])}
-                  style={{ background: 'transparent', border: 'none', color: '#b31d28', cursor: 'pointer', fontSize: '0.8rem' }}
-                >
-                  Clear All Frames
-                </button>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 'var(--space-3)' }}>
-                {sequenceFrames.map((url, idx) => (
-                  <div key={idx} style={{
-                    border: previewFrameIndex360 === idx ? '2px solid var(--color-accent-gold)' : '1px solid var(--color-border-subtle)',
-                    padding: '4px',
-                    textAlign: 'center',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => setPreviewFrameIndex360(idx)}
-                  >
-                    <img src={url} alt={`Frame ${idx + 1}`} style={{ width: '100%', height: '70px', objectFit: 'cover' }} />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
-                      <span style={{ fontSize: '0.65rem', color: 'var(--color-text-muted)' }}>#{idx + 1}</span>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSequenceFrames((prev) => prev.filter((_, i) => i !== idx));
-                        }}
-                        style={{ background: 'transparent', border: 'none', color: '#b31d28', cursor: 'pointer', fontSize: '10px' }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
         </div>

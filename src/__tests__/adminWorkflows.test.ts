@@ -98,12 +98,7 @@ describe('Admin Management: Product Form Data & Media Structures', () => {
       },
       glbModel: {
         url: 'https://storage.villexa.com/products/aura.glb'
-      },
-      sequenceFrames: [
-        { url: 'https://storage.villexa.com/products/aura-360-01.webp' },
-        { url: 'https://storage.villexa.com/products/aura-360-02.webp' },
-        { url: 'https://storage.villexa.com/products/aura-360-03.webp' }
-      ]
+      }
     };
 
     expect(formData.name).toBe('Aura Grand Dining Table');
@@ -114,22 +109,6 @@ describe('Admin Management: Product Form Data & Media Structures', () => {
     expect(formData.primaryImageUrl).toContain('aura-1.webp');
     expect(formData.productVideo?.url).toBeDefined();
     expect(formData.glbModel?.url).toContain('.glb');
-    expect(formData.sequenceFrames?.length).toBe(3);
-  });
-
-  it('validates 360 sequence ordering integrity', () => {
-    const frameUrls = [
-      'frame_001.webp',
-      'frame_002.webp',
-      'frame_003.webp',
-      'frame_004.webp'
-    ];
-
-    // Frame sequence must maintain strict index order
-    frameUrls.forEach((frame, idx) => {
-      const frameNum = parseInt(frame.replace(/\D/g, ''), 10);
-      expect(frameNum).toBe(idx + 1);
-    });
   });
 
   it('verifies video file constraints and rejects unplayable legacy video formats', () => {
@@ -144,24 +123,22 @@ describe('Admin Management: Product Form Data & Media Structures', () => {
     expect(validateFile(webmFile, 'video').valid).toBe(true);
   });
 
-  it('validates preferred viewer options match database constraint schema', () => {
-    const validViewerModes: ProductFormData['preferredViewer'][] = ['gallery', 'glb_3d', 'sequence_360', 'video'];
-    const dbAllowedSet = new Set(['gallery', 'glb_3d', 'sequence_360', 'video']);
+  it('validates preferred viewer options match active viewer schema', () => {
+    const validViewerModes: ProductFormData['preferredViewer'][] = ['gallery', 'glb_3d', 'video'];
+    const activeAllowedSet = new Set(['gallery', 'glb_3d', 'video']);
 
     validViewerModes.forEach((mode) => {
-      expect(dbAllowedSet.has(mode)).toBe(true);
+      expect(activeAllowedSet.has(mode)).toBe(true);
     });
   });
 
-  it('preserves existing GLB and Gallery preferences while accepting video', () => {
+  it('preserves GLB and Gallery preferences while accepting video', () => {
     const galleryProduct: Partial<ProductFormData> = { preferredViewer: 'gallery' };
     const glbProduct: Partial<ProductFormData> = { preferredViewer: 'glb_3d' };
-    const sequenceProduct: Partial<ProductFormData> = { preferredViewer: 'sequence_360' };
     const videoProduct: Partial<ProductFormData> = { preferredViewer: 'video' };
 
     expect(galleryProduct.preferredViewer).toBe('gallery');
     expect(glbProduct.preferredViewer).toBe('glb_3d');
-    expect(sequenceProduct.preferredViewer).toBe('sequence_360');
     expect(videoProduct.preferredViewer).toBe('video');
   });
 });

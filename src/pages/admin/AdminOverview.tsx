@@ -36,7 +36,6 @@ export const AdminOverview: React.FC = () => {
   const draftCount = products.filter((p) => p.status === 'draft').length;
   const missingMediaCount = products.filter((p) => !p.primaryImageUrl).length;
   const with3DCount = products.filter((p) => Boolean(p.glbConfig?.modelUrl)).length;
-  const with360Count = products.filter((p) => Boolean(p.sequence360Config && p.sequence360Config.frameCount > 0)).length;
   const withVideoCount = products.filter((p) => Boolean(p.videoUrl)).length;
   const newEnquiriesCount = enquiries.filter((e) => e.status === 'new').length;
 
@@ -149,7 +148,7 @@ export const AdminOverview: React.FC = () => {
             <Film size={15} color="var(--color-accent-gold)" />
           </div>
           <div style={{ fontSize: '1.4rem', fontFamily: 'var(--font-serif)', color: 'var(--color-text-primary)', marginTop: '4px' }}>
-            {isLoading ? '—' : `${with3DCount} 3D · ${with360Count} 360°`}
+            {isLoading ? '—' : `${with3DCount} 3D · ${withVideoCount} Videos`}
           </div>
           <p style={{ fontSize: '0.75rem', marginTop: 'var(--space-1)', color: 'var(--color-text-secondary)' }}>
             {withVideoCount} product videos attached
@@ -229,9 +228,8 @@ export const AdminOverview: React.FC = () => {
                     <td style={{ padding: 'var(--space-3)', fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
                       <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
                         {product.glbConfig?.modelUrl && <span style={{ color: 'var(--color-accent-gold)' }}>3D</span>}
-                        {product.sequence360Config && <span style={{ color: 'var(--color-accent-gold)' }}>360°</span>}
                         {product.videoUrl && <span style={{ color: 'var(--color-accent-gold)' }}>VID</span>}
-                        {!product.glbConfig?.modelUrl && !product.sequence360Config && !product.videoUrl && <span>Photo only</span>}
+                        {!product.glbConfig?.modelUrl && !product.videoUrl && <span>Photo only</span>}
                       </div>
                     </td>
                     <td style={{ padding: 'var(--space-3)', textAlign: 'right' }}>
@@ -369,12 +367,8 @@ export const AdminOverview: React.FC = () => {
               <strong>{with3DCount} active</strong>
             </li>
             <li style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>360° Rotating Sequences:</span>
-              <strong>{with360Count} active</strong>
-            </li>
-            <li style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ color: 'var(--color-text-secondary)' }}>Showroom Video Configured:</span>
-              <span>Available in Videos & Media</span>
+              <span style={{ color: 'var(--color-text-secondary)' }}>Showroom Videos Attached:</span>
+              <strong>{withVideoCount} active</strong>
             </li>
           </ul>
         </div>

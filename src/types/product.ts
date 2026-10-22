@@ -5,7 +5,7 @@
 
 export type ProductStatus = 'draft' | 'published';
 
-export type ProductViewerMode = 'gallery' | 'glb_3d' | 'sequence_360' | 'video';
+export type ProductViewerMode = 'gallery' | 'glb_3d' | 'video';
 
 export interface ProductDimensions {
   width: number;
@@ -26,20 +26,13 @@ export interface ProductFinish {
 export interface ProductMediaItem {
   id: string;
   productId: string;
-  type: 'image' | 'video' | 'glb_model' | 'sequence_frame';
+  type: 'image' | 'video' | 'glb_model';
   url: string;
   storagePath?: string;
   thumbnailUrl?: string;
   sortOrder: number;
   altText?: string;
   metadata?: Record<string, unknown>;
-}
-
-export interface Product360Config {
-  frameCount: number;
-  initialFrame: number;
-  rotationDirection: 'clockwise' | 'counter_clockwise';
-  frameUrls: string[];
 }
 
 export interface ProductGLBConfig {
@@ -81,9 +74,19 @@ export interface Product {
   galleryMedia?: Array<{ url: string; storagePath?: string; metadata?: Record<string, unknown> }>;
   videoUrl?: string | null;
   videoPosterUrl?: string | null;
+  videoMedia?: {
+    url: string;
+    storagePath?: string;
+    posterUrl?: string;
+    metadata?: Record<string, unknown>;
+  } | null;
   preferredViewer: ProductViewerMode;
   glbConfig?: ProductGLBConfig;
-  sequence360Config?: Product360Config;
+  glbMedia?: {
+    url: string;
+    storagePath?: string;
+    metadata?: Record<string, unknown>;
+  } | null;
 
   // Organization & Metadata
   tags: string[];

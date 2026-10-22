@@ -15,6 +15,26 @@ import {
  * Enforced via Supabase RLS is_admin() check at database and storage levels.
  */
 
+/**
+ * Safely parses the relative vault path from a full signed URL or vault URL.
+ * e.g. "https://.../storage/v1/object/sign/atelier-vault/drafts/videos/123_video.mp4?token=..." -> "drafts/videos/123_video.mp4"
+ */
+export function extractVaultPathFromUrl(url: string | null | undefined): string | null {
+  if (!url || typeof url !== 'string') return null;
+  if (url.startsWith('drafts/') || url.startsWith('published/') || url.startsWith('products/')) {
+    return url;
+  }
+  if (!url.includes('atelier-vault/')) return null;
+  try {
+    const afterVault = url.split('atelier-vault/')[1];
+    if (!afterVault) return null;
+    const cleanPath = decodeURIComponent(afterVault.split('?')[0]);
+    return cleanPath.startsWith('/') ? cleanPath.substring(1) : cleanPath;
+  } catch {
+    return null;
+  }
+}
+
 export interface ProductFormData {
   id?: string;
   name: string;
@@ -49,7 +69,6 @@ export interface ProductFormData {
   galleryImages?: Array<{ url: string; storagePath?: string; metadata?: Record<string, unknown> }>;
   productVideo?: { url: string; posterUrl?: string; storagePath?: string; metadata?: Record<string, unknown> } | null;
   glbModel?: { url: string; storagePath?: string; metadata?: Record<string, unknown> } | null;
-  sequenceFrames?: Array<{ url: string; storagePath?: string; metadata?: Record<string, unknown> }>;
 }
 
 export const adminService = {
@@ -59,7 +78,7 @@ export const adminService = {
 
     const { data, error } = await supabase
       .from('products')
-      .select('*, categories(*), collections(*), product_media(*), product_sequences_360(*)')
+      .select('*, categories(*), collections(*), product_media(*)')
       .order('created_at', { ascending: false });
 
     if (error || !data) {
@@ -70,14 +89,10 @@ export const adminService = {
     // Collect all draft vault storage paths across products to batch generate fresh signed preview URLs
     const vaultPathsToSign: string[] = [];
     data.forEach((item) => {
-      (item.product_media || []).forEach((m: { storage_path?: string }) => {
-        if (m.storage_path && !m.storage_path.startsWith('published/') && !m.storage_path.startsWith('http')) {
-          vaultPathsToSign.push(m.storage_path);
-        }
-      });
-      (item.product_sequences_360 || []).forEach((s: { storage_path?: string }) => {
-        if (s.storage_path && !s.storage_path.startsWith('published/') && !s.storage_path.startsWith('http')) {
-          vaultPathsToSign.push(s.storage_path);
+      (item.product_media || []).forEach((m: { storage_path?: string; public_url?: string }) => {
+        const path = m.storage_path || extractVaultPathFromUrl(m.public_url);
+        if (path && !path.startsWith('published/') && !path.startsWith('http')) {
+          vaultPathsToSign.push(path);
         }
       });
     });
@@ -107,12 +122,12 @@ export const adminService = {
       const glbItem = item.product_media?.find((m: { type: string }) => m.type === 'glb_model');
       const videoItem = item.product_media?.find((m: { type: string }) => m.type === 'video');
       const imageItems = (item.product_media || []).filter((m: { type: string }) => m.type === 'image');
-      const seqItems = (item.product_sequences_360 || []).sort((a: { frame_index: number }, b: { frame_index: number }) => a.frame_index - b.frame_index);
 
       // Resolve gallery images with fresh signed URLs if in private vault, or existing permanent URL
       const galleryMedia: Array<{ url: string; storagePath?: string; metadata?: Record<string, unknown> }> = imageItems.map((m: { public_url: string; storage_path?: string; metadata?: any }) => {
-        const signed = m.storage_path ? signedUrlMap.get(m.storage_path) : undefined;
-        const isVault = m.storage_path && !m.storage_path.startsWith('published/') && !m.storage_path.startsWith('http');
+        const path = m.storage_path || extractVaultPathFromUrl(m.public_url);
+        const signed = path ? signedUrlMap.get(path) : undefined;
+        const isVault = path && !path.startsWith('published/') && !path.startsWith('http');
         const freshUrl = (isVault && signed) ? signed : m.public_url;
         return {
           url: freshUrl,
@@ -131,19 +146,31 @@ export const adminService = {
         }
       }
 
-      // Resolve 3D GLB Model URL
+      // Resolve 3D GLB Model URL & Media
       let glbUrl = glbItem?.public_url;
-      if (isDraft && glbItem?.storage_path && signedUrlMap.get(glbItem.storage_path)) {
-        glbUrl = signedUrlMap.get(glbItem.storage_path);
+      const glbVaultPath = glbItem?.storage_path || extractVaultPathFromUrl(glbItem?.public_url);
+      if (isDraft && glbVaultPath && signedUrlMap.get(glbVaultPath)) {
+        glbUrl = signedUrlMap.get(glbVaultPath);
       }
+      const glbMedia = glbItem ? {
+        url: glbUrl || glbItem.public_url,
+        storagePath: glbItem.storage_path || undefined,
+        metadata: glbItem.metadata || undefined
+      } : null;
 
-      // Resolve 360 Sequence frame URLs
-      const frameUrls = seqItems.map((s: { public_url: string; storage_path: string }) => {
-        if (isDraft && s.storage_path && signedUrlMap.get(s.storage_path)) {
-          return signedUrlMap.get(s.storage_path)!;
-        }
-        return s.public_url;
-      });
+      // Resolve Video URL & Media
+      let videoUrl = videoItem?.public_url || null;
+      const videoVaultPath = videoItem?.storage_path || extractVaultPathFromUrl(videoItem?.public_url);
+      if (isDraft && videoVaultPath && signedUrlMap.get(videoVaultPath)) {
+        videoUrl = signedUrlMap.get(videoVaultPath)!;
+      }
+      const videoPosterUrl = (videoItem?.metadata as any)?.posterUrl || videoItem?.thumbnail_url || null;
+      const videoMedia = videoItem ? {
+        url: videoUrl || videoItem.public_url,
+        storagePath: videoItem.storage_path || undefined,
+        posterUrl: videoPosterUrl || undefined,
+        metadata: videoItem.metadata || undefined
+      } : null;
 
       return {
         id: item.id,
@@ -168,16 +195,12 @@ export const adminService = {
         primaryImageUrl: primaryUrl,
         galleryImages: galleryMedia.map((m: { url: string }) => m.url),
         galleryMedia,
-        videoUrl: videoItem?.public_url || null,
-        videoPosterUrl: (videoItem?.metadata as any)?.posterUrl || null,
-        preferredViewer: (item.preferred_viewer === 'video' || (videoItem?.metadata as any)?.is_preferred_viewer) ? 'video' : (item.preferred_viewer || 'gallery'),
+        videoUrl,
+        videoPosterUrl,
+        videoMedia,
+        preferredViewer: (item.preferred_viewer === 'video' || (videoItem?.metadata as any)?.is_preferred_viewer) ? 'video' : (item.preferred_viewer === 'glb_3d' ? 'glb_3d' : 'gallery'),
         glbConfig: glbItem ? { modelUrl: glbUrl || glbItem.public_url } : undefined,
-        sequence360Config: seqItems.length > 0 ? {
-          frameCount: seqItems.length,
-          initialFrame: 0,
-          rotationDirection: 'clockwise' as const,
-          frameUrls
-        } : undefined,
+        glbMedia,
         tags: item.tags || [],
         isFeatured: item.is_featured ?? false,
         sortOrder: item.sort_order ?? 0,
@@ -198,19 +221,19 @@ export const adminService = {
     let finalPrimaryImageUrl = form.primaryImageUrl;
     let finalGalleryImages = form.galleryImages ? [...form.galleryImages] : undefined;
     let finalGlbModel = form.glbModel ? { ...form.glbModel } : form.glbModel;
-    let finalSequenceFrames = form.sequenceFrames ? [...form.sequenceFrames] : undefined;
-
+    let finalProductVideo = form.productVideo ? { ...form.productVideo } : form.productVideo;
 
     // PUBLICATION WORKFLOW:
     // If saving as published, promote assets from private vault to public showroom buckets
     if (form.status === 'published') {
+      // 1. Promote Gallery Images
       if (finalGalleryImages) {
         const promoted: Array<{ url: string; storagePath?: string; metadata?: Record<string, unknown> }> = [];
         for (const img of finalGalleryImages) {
           const alreadyExists = img.storagePath?.startsWith('published/') && await assetExists('product-images', img.storagePath);
           if (!alreadyExists) {
-            const vaultSource = (img.metadata as any)?.draft_vault_path || img.storagePath;
-            if (vaultSource) {
+            const vaultSource = (img.metadata as any)?.draft_vault_path || img.storagePath || extractVaultPathFromUrl(img.url);
+            if (vaultSource && !vaultSource.startsWith('http')) {
               const res = await promoteDraftToPublic(vaultSource, 'image');
               if (res.success && res.publicUrl) {
                 promoted.push({
@@ -243,56 +266,91 @@ export const adminService = {
         }
       }
 
-      if (finalGlbModel?.storagePath) {
-        const alreadyExists = finalGlbModel.storagePath.startsWith('published/') && await assetExists('product-models', finalGlbModel.storagePath);
-        if (!alreadyExists) {
-          const vaultSource = (finalGlbModel.metadata as any)?.draft_vault_path || finalGlbModel.storagePath;
-          const res = await promoteDraftToPublic(vaultSource, 'model');
-          if (res.success && res.publicUrl) {
-            finalGlbModel = {
-              url: res.publicUrl,
-              storagePath: res.publicPath,
-              metadata: {
-                ...(finalGlbModel.metadata || {}),
-                draft_vault_path: res.vaultPath || vaultSource
-              }
-            };
-          } else {
+      // 2. Promote 3D GLB Model
+      if (finalGlbModel && finalGlbModel.url) {
+        const vaultSource = (finalGlbModel.metadata as any)?.draft_vault_path || 
+                            finalGlbModel.storagePath || 
+                            extractVaultPathFromUrl(finalGlbModel.url);
+
+        const isAlreadyPublished = finalGlbModel.storagePath?.startsWith('published/') && await assetExists('product-models', finalGlbModel.storagePath);
+
+        if (!isAlreadyPublished) {
+          if (vaultSource && !vaultSource.startsWith('http')) {
+            const res = await promoteDraftToPublic(vaultSource, 'model');
+            if (res.success && res.publicUrl) {
+              finalGlbModel = {
+                ...finalGlbModel,
+                url: res.publicUrl,
+                storagePath: res.publicPath,
+                metadata: {
+                  ...(finalGlbModel.metadata || {}),
+                  draft_vault_path: res.vaultPath || vaultSource
+                }
+              };
+            } else {
+              return {
+                success: false,
+                error: `Failed to promote 3D GLB model to public showroom: ${res.error || 'Unknown error'}. Product remains in draft status.`
+              };
+            }
+          } else if (!finalGlbModel.storagePath && finalGlbModel.url.includes('atelier-vault')) {
             return {
               success: false,
-              error: `Failed to promote 3D GLB model to public showroom: ${res.error || 'Unknown error'}. Product remains in draft status.`
+              error: '3D model file in draft vault could not be verified or has expired. Please upload a fresh .glb file.'
             };
           }
         }
       }
 
-      if (finalSequenceFrames) {
-        const promoted: Array<{ url: string; storagePath?: string; metadata?: Record<string, unknown> }> = [];
-        for (const frame of finalSequenceFrames) {
-          const alreadyExists = frame.storagePath?.startsWith('published/') && await assetExists('360-sequences', frame.storagePath);
-          if (!alreadyExists && frame.storagePath) {
-            const vaultSource = (frame.metadata as any)?.draft_vault_path || frame.storagePath;
-            const res = await promoteDraftToPublic(vaultSource, 'sequence');
+      // 3. Promote Showcase Video & Poster
+      if (finalProductVideo && finalProductVideo.url) {
+        // Promote video poster thumbnail if present and in vault
+        const posterVaultSource = (finalProductVideo.metadata as any)?.posterStoragePath || 
+                                  extractVaultPathFromUrl(finalProductVideo.posterUrl);
+        if (posterVaultSource && !posterVaultSource.startsWith('published/') && !posterVaultSource.startsWith('http')) {
+          const posterRes = await promoteDraftToPublic(posterVaultSource, 'image');
+          if (posterRes.success && posterRes.publicUrl) {
+            finalProductVideo.posterUrl = posterRes.publicUrl;
+            finalProductVideo.metadata = {
+              ...(finalProductVideo.metadata || {}),
+              draft_poster_vault_path: posterRes.vaultPath || posterVaultSource,
+              posterUrl: posterRes.publicUrl
+            };
+          }
+        }
+
+        const vaultSource = (finalProductVideo.metadata as any)?.draft_vault_path || 
+                            finalProductVideo.storagePath || 
+                            extractVaultPathFromUrl(finalProductVideo.url);
+
+        const isAlreadyPublished = finalProductVideo.storagePath?.startsWith('published/') && await assetExists('showroom-videos', finalProductVideo.storagePath);
+
+        if (!isAlreadyPublished) {
+          if (vaultSource && !vaultSource.startsWith('http')) {
+            const res = await promoteDraftToPublic(vaultSource, 'video');
             if (res.success && res.publicUrl) {
-              promoted.push({
+              finalProductVideo = {
+                ...finalProductVideo,
                 url: res.publicUrl,
                 storagePath: res.publicPath,
                 metadata: {
-                  ...(frame.metadata || {}),
+                  ...(finalProductVideo.metadata || {}),
                   draft_vault_path: res.vaultPath || vaultSource
                 }
-              });
+              };
             } else {
               return {
                 success: false,
-                error: `Failed to promote 360 sequence frame to public showroom: ${res.error || 'Unknown error'}. Product remains in draft status.`
+                error: `Failed to promote showcase video to public showroom: ${res.error || 'Unknown error'}. Product remains in draft status.`
               };
             }
-          } else {
-            promoted.push(frame);
+          } else if (!finalProductVideo.storagePath && finalProductVideo.url.includes('atelier-vault')) {
+            return {
+              success: false,
+              error: 'Showcase video file in draft vault could not be verified or has expired. Please upload a fresh video file.'
+            };
           }
         }
-        finalSequenceFrames = promoted;
       }
     } else {
       // DRAFT WORKFLOW:
@@ -302,7 +360,7 @@ export const adminService = {
         if (existingMedia) {
           for (const m of existingMedia) {
             if (m.storage_path && m.storage_path.startsWith('published/')) {
-              const b = m.type === 'image' ? 'product-images' : m.type === 'glb_model' ? 'product-models' : '360-sequences';
+              const b = m.type === 'image' ? 'product-images' : m.type === 'glb_model' ? 'product-models' : m.type === 'video' ? 'showroom-videos' : '360-sequences';
               await revokePublicAsset(b, m.storage_path);
             }
           }
@@ -406,44 +464,24 @@ export const adminService = {
         }
       }
 
-      // Sync 360 Sequences into product_sequences_360
-      if (savedId && finalSequenceFrames !== undefined) {
-        const { error: delErr } = await supabase.from('product_sequences_360').delete().eq('product_id', savedId);
-        if (delErr) {
-          return { success: false, error: `Failed to clear existing 360 sequence: ${delErr.message}` };
-        }
-        if (finalSequenceFrames.length > 0) {
-          const sequenceRows = finalSequenceFrames.map((frame, idx) => ({
-            product_id: savedId,
-            sequence_identifier: 'primary',
-            frame_index: idx + 1,
-            storage_path: frame.storagePath || '',
-            public_url: frame.url
-          }));
-          const { error: insErr } = await supabase.from('product_sequences_360').insert(sequenceRows);
-          if (insErr) {
-            return { success: false, error: `Failed to persist 360 sequence frames: ${insErr.message}` };
-          }
-        }
-      }
-
       // Sync Product Video into product_media
-      if (savedId && form.productVideo !== undefined) {
+      if (savedId && finalProductVideo !== undefined) {
         const { error: delErr } = await supabase.from('product_media').delete().eq('product_id', savedId).eq('type', 'video');
         if (delErr) {
           return { success: false, error: `Failed to clear existing video: ${delErr.message}` };
         }
-        if (form.productVideo) {
+        if (finalProductVideo && finalProductVideo.url) {
           const { error: insErr } = await supabase.from('product_media').insert([
             {
               product_id: savedId,
               type: 'video',
-              storage_path: form.productVideo.storagePath || '',
-              public_url: form.productVideo.url,
+              storage_path: finalProductVideo.storagePath || '',
+              public_url: finalProductVideo.url,
               sort_order: 0,
+              thumbnail_url: finalProductVideo.posterUrl || null,
               metadata: {
-                ...(form.productVideo.metadata || {}),
-                ...(form.productVideo.posterUrl ? { posterUrl: form.productVideo.posterUrl } : {}),
+                ...(finalProductVideo.metadata || {}),
+                ...(finalProductVideo.posterUrl ? { posterUrl: finalProductVideo.posterUrl } : {}),
                 is_preferred_viewer: form.preferredViewer === 'video'
               }
             }
@@ -471,7 +509,7 @@ export const adminService = {
         for (const m of media) {
           if (m.storage_path) {
             if (m.storage_path.startsWith('published/')) {
-              const b = m.type === 'image' ? 'product-images' : m.type === 'glb_model' ? 'product-models' : m.type === 'video' ? 'showroom-videos' : '360-sequences';
+              const b = m.type === 'image' ? 'product-images' : m.type === 'glb_model' ? 'product-models' : 'showroom-videos';
               await revokePublicAsset(b, m.storage_path);
             } else {
               await deleteAsset(VAULT_BUCKET, m.storage_path);
@@ -480,20 +518,7 @@ export const adminService = {
         }
       }
 
-      const { data: seq } = await supabase.from('product_sequences_360').select('*').eq('product_id', id);
-      if (seq) {
-        for (const s of seq) {
-          if (s.storage_path) {
-            if (s.storage_path.startsWith('published/')) {
-              await revokePublicAsset('360-sequences', s.storage_path);
-            } else {
-              await deleteAsset(VAULT_BUCKET, s.storage_path);
-            }
-          }
-        }
-      }
-
-      // 2. Delete database row (cascades to product_media, product_finishes, product_sequences_360)
+      // 2. Delete database row (cascades to product_media and product_finishes)
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) return { success: false, error: error.message };
       return { success: true };
@@ -518,8 +543,8 @@ export const adminService = {
             const targetBucket = m.type === 'image' ? 'product-images' : m.type === 'glb_model' ? 'product-models' : m.type === 'video' ? 'showroom-videos' : '360-sequences';
             const exists = m.storage_path && m.storage_path.startsWith('published/') && await assetExists(targetBucket, m.storage_path);
             if (!exists) {
-              const vaultSource = (m.metadata as any)?.draft_vault_path || m.storage_path;
-              if (vaultSource) {
+              const vaultSource = (m.metadata as any)?.draft_vault_path || m.storage_path || extractVaultPathFromUrl(m.public_url);
+              if (vaultSource && !vaultSource.startsWith('http')) {
                 const uploadType = m.type === 'glb_model' ? 'model' : m.type === 'video' ? 'video' : m.type === 'sequence_frame' ? 'sequence' : 'image';
                 const res = await promoteDraftToPublic(vaultSource, uploadType);
                 if (res.success && res.publicUrl) {
@@ -547,29 +572,6 @@ export const adminService = {
           }
         }
 
-        const { data: sequences, error: seqErr } = await supabase.from('product_sequences_360').select('*').eq('product_id', id);
-        if (seqErr) return { success: false, error: seqErr.message };
-
-        if (sequences) {
-          for (const s of sequences) {
-            const exists = s.storage_path && s.storage_path.startsWith('published/') && await assetExists('360-sequences', s.storage_path);
-            if (!exists && s.storage_path) {
-              const res = await promoteDraftToPublic(s.storage_path, 'sequence');
-              if (res.success && res.publicUrl) {
-                await supabase.from('product_sequences_360').update({
-                  public_url: res.publicUrl,
-                  storage_path: res.publicPath
-                }).eq('id', s.id);
-              } else {
-                return {
-                  success: false,
-                  error: `Failed to promote 360 sequence frame "${s.storage_path}": ${res.error || 'Unknown error'}. Product remains in draft status.`
-                };
-              }
-            }
-          }
-        }
-
         const updatePayload: Record<string, unknown> = {
           status: 'published',
           updated_at: new Date().toISOString()
@@ -590,25 +592,12 @@ export const adminService = {
         if (media) {
           for (const m of media) {
             if (m.storage_path && m.storage_path.startsWith('published/')) {
-              const b = m.type === 'image' ? 'product-images' : m.type === 'glb_model' ? 'product-models' : m.type === 'video' ? 'showroom-videos' : '360-sequences';
+              const b = m.type === 'image' ? 'product-images' : m.type === 'glb_model' ? 'product-models' : 'showroom-videos';
               await revokePublicAsset(b, m.storage_path);
-              const draftVaultPath = (m.metadata as any)?.draft_vault_path || `drafts/${m.type === 'image' ? 'images' : m.type === 'glb_model' ? 'models' : m.type === 'video' ? 'videos' : 'sequences'}/${m.storage_path.split('/').pop()}`;
+              const draftVaultPath = (m.metadata as any)?.draft_vault_path || `drafts/${m.type === 'image' ? 'images' : m.type === 'glb_model' ? 'models' : 'videos'}/${m.storage_path.split('/').pop()}`;
               await supabase.from('product_media').update({
                 storage_path: draftVaultPath
               }).eq('id', m.id);
-            }
-          }
-        }
-
-        const { data: sequences } = await supabase.from('product_sequences_360').select('*').eq('product_id', id);
-        if (sequences) {
-          for (const s of sequences) {
-            if (s.storage_path && s.storage_path.startsWith('published/')) {
-              await revokePublicAsset('360-sequences', s.storage_path);
-              const draftVaultPath = `drafts/sequences/${s.storage_path.split('/').pop()}`;
-              await supabase.from('product_sequences_360').update({
-                storage_path: draftVaultPath
-              }).eq('id', s.id);
             }
           }
         }
