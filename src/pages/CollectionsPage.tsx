@@ -142,7 +142,7 @@ export const CollectionsPage: React.FC = () => {
                     <h3 style={{ fontSize: '1.25rem', fontFamily: 'var(--font-serif)', color: '#ffffff', margin: '2px 0 0' }}>{col.name}</h3>
                   </div>
                   <Link
-                    href={`/catalogue`}
+                    href={`/catalogue?category=${encodeURIComponent(col.name)}`}
                     className="glass-pill"
                     style={{
                       width: '38px',
@@ -204,7 +204,7 @@ export const CollectionsPage: React.FC = () => {
                     </span>
                   </div>
                   <Link
-                    href={`/catalogue`}
+                    href={`/catalogue?category=${encodeURIComponent(suite.categoryFilter || suite.name)}`}
                     className="glass-pill"
                     style={{
                       width: '38px',

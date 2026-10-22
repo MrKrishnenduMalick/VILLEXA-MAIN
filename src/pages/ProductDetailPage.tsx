@@ -7,6 +7,7 @@ import { EmptyState } from '../components/common/EmptyState';
 import { ThreeViewerEngine } from '../services/viewer/threeViewerEngine';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { useClientConfig } from '../context/ClientConfigContext';
+import { INAUGURAL_CATALOGUE_BY_SLUG } from '../config/inauguralCatalogue';
 
 export const ProductDetailPage: React.FC = () => {
   const clientConfig = useClientConfig();
@@ -31,45 +32,6 @@ export const ProductDetailPage: React.FC = () => {
   const canvasContainerRef = useRef<HTMLDivElement | null>(null);
   const viewerEngineRef = useRef<ThreeViewerEngine | null>(null);
 
-  const INAUGURAL_FALLBACKS: Record<string, Product> = {
-    'emerald-velvet-armchair': {
-      id: 'feat-1',
-      slug: 'emerald-velvet-armchair',
-      name: 'Emerald Velvet Armchair',
-      sku: 'VLX-CH-01',
-      categoryId: 'living',
-      categoryName: 'LIVING ROOM',
-      regularPrice: 1200,
-      currency: 'USD',
-      showPricePublicly: true,
-      isEnquiryOnly: false,
-      shortDescription: 'A contemporary emerald velvet barrel armchair with sculpted rounded arms and a refined, comfortable silhouette. Perfect for modern living spaces.',
-      fullDescription: 'Sculpted in our Brianza atelier with high-resilience memory foam, hand-upholstered in Italian emerald velvet over a kiln-dried European beech frame with tapered brushed brass legs.',
-      materials: 'Italian Emerald Velvet, European Beech, Brushed Brass',
-      careInstructions: 'Professional upholstery clean only. Vacuum gently with soft brush attachment. Protect from direct prolonged sunlight.',
-      dimensions: {
-        width: 86,
-        depth: 82,
-        height: 78,
-        seatHeight: 44,
-        unit: 'cm'
-      },
-      primaryImageUrl: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1000&q=85',
-      galleryImages: [
-        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=1000&q=85',
-        'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1000&q=85'
-      ],
-      finishes: [],
-      preferredViewer: 'gallery',
-      tags: ['Living Room', 'Armchair', 'Velvet'],
-      isFeatured: true,
-      sortOrder: 1,
-      status: 'published',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
-  };
-
   useEffect(() => {
     async function loadProduct() {
       if (!slug) {
@@ -78,8 +40,8 @@ export const ProductDetailPage: React.FC = () => {
       }
       try {
         let found = await productService.getProductBySlug(slug);
-        if (!found && INAUGURAL_FALLBACKS[slug]) {
-          found = INAUGURAL_FALLBACKS[slug];
+        if (!found && INAUGURAL_CATALOGUE_BY_SLUG[slug]) {
+          found = INAUGURAL_CATALOGUE_BY_SLUG[slug];
         }
         setProduct(found);
         if (found) {
