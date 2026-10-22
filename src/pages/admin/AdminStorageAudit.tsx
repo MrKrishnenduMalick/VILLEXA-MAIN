@@ -201,7 +201,7 @@ export const AdminStorageAudit: React.FC = () => {
             </div>
           </div>
 
-          {/* Card 3: Delete Candidates */}
+          {/* Card 3: Review Candidates */}
           <div style={{
             padding: 'var(--space-5)',
             backgroundColor: 'var(--color-bg-surface)',
@@ -209,14 +209,14 @@ export const AdminStorageAudit: React.FC = () => {
             borderLeft: '4px solid #ca8a04'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#ca8a04' }}>
-              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Unreferenced Candidates</span>
+              <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Review Candidates</span>
               <Trash2 size={16} />
             </div>
             <div style={{ fontSize: '1.6rem', fontWeight: 600, marginTop: 'var(--space-2)', color: '#a16207' }}>
               {report.items.filter(i => i.classification === 'UNREFERENCED_CANDIDATE').length}
             </div>
             <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginTop: '4px' }}>
-              {formatBytes(report.reclaimableBytes)} reclaimable
+              {formatBytes(report.reclaimableBytes)} (unreferenced, review required)
             </div>
           </div>
 
@@ -385,7 +385,7 @@ export const AdminStorageAudit: React.FC = () => {
           >
             <option value="all">All Classifications</option>
             <option value="REFERENCED_KEEP">Referenced — KEEP</option>
-            <option value="UNREFERENCED_CANDIDATE">Unreferenced — DELETE CANDIDATE</option>
+            <option value="UNREFERENCED_CANDIDATE">Unreferenced — Review Candidate</option>
             <option value="NEEDS_REVIEW">Needs Review — DO NOT DELETE</option>
           </select>
 
@@ -395,7 +395,7 @@ export const AdminStorageAudit: React.FC = () => {
               className="btn btn-secondary"
               style={{ padding: '0.45rem 0.85rem', fontSize: '0.75rem' }}
             >
-              Select All ({candidateItems.length}) Candidates
+              Select All ({candidateItems.length}) Review Candidates
             </button>
           )}
         </div>
@@ -417,6 +417,20 @@ export const AdminStorageAudit: React.FC = () => {
             }}
           />
         </div>
+      </div>
+
+      {/* Safety Advisory Banner */}
+      <div style={{
+        padding: 'var(--space-3) var(--space-4)',
+        backgroundColor: 'rgba(234, 179, 8, 0.06)',
+        border: '1px solid rgba(234, 179, 8, 0.25)',
+        borderLeft: '4px solid #ca8a04',
+        marginBottom: 'var(--space-4)',
+        fontSize: '0.8rem',
+        color: 'var(--color-text-secondary)',
+        lineHeight: 1.5
+      }}>
+        <strong style={{ color: '#a16207' }}>Review Advisory:</strong> Items labeled <em style={{ color: '#a16207', fontWeight: 600 }}>"Review Candidate"</em> have no active database references detected during this scan. This indicates an unreferenced status for administrative review, <u>not a guarantee</u> that the file is safe to permanently delete. Inspect duplicate copies, archival assets, and recent uploads before selecting any file.
       </div>
 
       {/* Main Inventory Table */}
@@ -471,6 +485,23 @@ export const AdminStorageAudit: React.FC = () => {
                     </td>
                     <td style={{ padding: 'var(--space-3) var(--space-4)', wordBreak: 'break-all' }}>
                       <span style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{item.path}</span>
+                      {item.duplicateMatches && item.duplicateMatches.length > 0 && (
+                        <div style={{ marginTop: '4px' }}>
+                          <span style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '1px 6px',
+                            fontSize: '0.65rem',
+                            fontWeight: 600,
+                            backgroundColor: 'rgba(234, 179, 8, 0.15)',
+                            color: '#a16207',
+                            borderRadius: '2px'
+                          }}>
+                            ⚠️ Near-Duplicate Match ({item.duplicateMatches.length})
+                          </span>
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: 'var(--space-3) var(--space-4)', whiteSpace: 'nowrap' }}>
                       {formatBytes(item.size)}
@@ -491,7 +522,7 @@ export const AdminStorageAudit: React.FC = () => {
                           '#1d4ed8'
                       }}>
                         {item.classification === 'REFERENCED_KEEP' ? 'Keep' :
-                         item.classification === 'UNREFERENCED_CANDIDATE' ? 'Delete Candidate' :
+                         item.classification === 'UNREFERENCED_CANDIDATE' ? 'Review Candidate' :
                          'Needs Review'}
                       </span>
                     </td>

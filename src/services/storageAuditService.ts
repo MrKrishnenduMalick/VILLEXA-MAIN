@@ -32,6 +32,12 @@ export interface StorageAuditedItem {
     identifier: string;
     field: string;
   };
+  duplicateMatches?: Array<{
+    bucket: string;
+    path: string;
+    size: number;
+    classification: StorageItemClassification;
+  }>;
 }
 
 export interface BucketAuditStats {
@@ -515,7 +521,7 @@ export const storageAuditService = {
         } else {
           // Genuinely unreferenced candidate
           classification = 'UNREFERENCED_CANDIDATE';
-          reason = 'No active database or configuration references point to this object.';
+          reason = 'Review Candidate: No active database or configuration references point to this object. Review carefully before deleting.';
           stats.candidateObjects += 1;
           stats.candidateBytes += size;
         }
@@ -535,6 +541,38 @@ export const storageAuditService = {
       }
 
       report.bucketStats[bucket] = stats;
+    }
+
+    // Step 2b: Duplicate and Near-Duplicate Detection
+    // Group objects by size (when size > 0) to cross-reference potential duplicates
+    const sizeMap = new Map<number, StorageAuditedItem[]>();
+    for (const it of auditedItems) {
+      if (it.size > 0) {
+        const group = sizeMap.get(it.size) || [];
+        group.push(it);
+        sizeMap.set(it.size, group);
+      }
+    }
+
+    for (const [, group] of sizeMap.entries()) {
+      if (group.length > 1) {
+        for (const item of group) {
+          const others = group.filter(other => other.id !== item.id);
+          item.duplicateMatches = others.map(o => ({
+            bucket: o.bucket,
+            path: o.path,
+            size: o.size,
+            classification: o.classification
+          }));
+
+          const referencedDuplicate = others.find(o => o.classification === 'REFERENCED_KEEP');
+          if (item.classification === 'UNREFERENCED_CANDIDATE' && referencedDuplicate) {
+            item.reason = `Review Candidate (Duplicate match): Exact size match (${(item.size / (1024 * 1024)).toFixed(2)} MB) with active referenced asset [${referencedDuplicate.bucket}] ${referencedDuplicate.path}. Review both copies manually before deleting.`;
+          } else if (item.classification === 'UNREFERENCED_CANDIDATE') {
+            item.reason = `Review Candidate (Duplicate match): Exact size match (${(item.size / (1024 * 1024)).toFixed(2)} MB) with ${others.length} other storage object(s). Review all copies before taking action.`;
+          }
+        }
+      }
     }
 
     // Step 3: Check for missing protected assets that are referenced but not found in storage

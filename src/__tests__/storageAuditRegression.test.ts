@@ -266,4 +266,221 @@ describe('Storage Audit & Cleanup Observability Regression Suite', () => {
       ).rejects.toThrow('Unauthorized');
     });
   });
+
+  // =========================================================================
+  // 6. Draft Media & Unpublished GLB Models Protection
+  // =========================================================================
+  describe('Draft Media & Unpublished 3D Models Reference Protection', () => {
+    it('classifies draft product media, staged videos, and unpublished GLB models as REFERENCED_KEEP', async () => {
+      vi.spyOn(supabaseClientModule, 'checkIsAdmin').mockResolvedValue(true);
+
+      const draftProductId = 'prod-draft-123';
+
+      // Mock DB: Draft product with primary image and product_media rows
+      vi.spyOn(supabase, 'from').mockImplementation((table: string) => ({
+        select: vi.fn().mockImplementation(() => {
+          if (table === 'products') {
+            return Promise.resolve({
+              data: [
+                {
+                  id: draftProductId,
+                  name: 'Draft Architectural Armchair',
+                  sku: 'VIL-DRF-001',
+                  primary_image_url: 'https://xyz.supabase.co/storage/v1/object/public/product-images/drafts/armchair-thumb.webp'
+                }
+              ],
+              error: null
+            });
+          }
+          if (table === 'product_media') {
+            return Promise.resolve({
+              data: [
+                {
+                  id: 'media-draft-1',
+                  product_id: draftProductId,
+                  type: 'glb_model',
+                  storage_path: 'published/models/armchair.glb',
+                  public_url: 'https://xyz.supabase.co/storage/v1/object/public/product-models/published/models/armchair.glb',
+                  thumbnail_url: null,
+                  metadata: { draft_vault_path: 'drafts/models/armchair-staged.glb' }
+                },
+                {
+                  id: 'media-draft-2',
+                  product_id: draftProductId,
+                  type: 'video',
+                  storage_path: 'published/videos/armchair-joinery.mp4',
+                  public_url: 'https://xyz.supabase.co/storage/v1/object/public/showroom-videos/published/videos/armchair-joinery.mp4',
+                  thumbnail_url: 'https://xyz.supabase.co/storage/v1/object/public/product-images/published/posters/armchair-poster.webp',
+                  metadata: {}
+                }
+              ],
+              error: null
+            });
+          }
+          return Promise.resolve({ data: [], error: null });
+        })
+      } as any));
+
+      // Mock storage containing these files at their actual nested paths
+      vi.spyOn(supabase.storage, 'from').mockImplementation((bucket: string) => ({
+        list: vi.fn().mockImplementation((folder: string) => {
+          if (bucket === 'product-models') {
+            if (folder === '') return Promise.resolve({ data: [{ id: null, name: 'published', metadata: null }], error: null });
+            if (folder === 'published') return Promise.resolve({ data: [{ id: null, name: 'models', metadata: null }], error: null });
+            if (folder === 'published/models') {
+              return Promise.resolve({
+                data: [{ id: 'glb-1', name: 'armchair.glb', metadata: { size: 15000000 }, updated_at: '2026-10-21' }],
+                error: null
+              });
+            }
+          }
+          if (bucket === 'showroom-videos') {
+            if (folder === '') return Promise.resolve({ data: [{ id: null, name: 'published', metadata: null }], error: null });
+            if (folder === 'published') return Promise.resolve({ data: [{ id: null, name: 'videos', metadata: null }], error: null });
+            if (folder === 'published/videos') {
+              return Promise.resolve({
+                data: [{ id: 'vid-1', name: 'armchair-joinery.mp4', metadata: { size: 28000000 }, updated_at: '2026-10-21' }],
+                error: null
+              });
+            }
+          }
+          if (bucket === 'atelier-vault') {
+            if (folder === '') return Promise.resolve({ data: [{ id: null, name: 'drafts', metadata: null }], error: null });
+            if (folder === 'drafts') return Promise.resolve({ data: [{ id: null, name: 'models', metadata: null }], error: null });
+            if (folder === 'drafts/models') {
+              return Promise.resolve({
+                data: [{ id: 'vault-1', name: 'armchair-staged.glb', metadata: { size: 15000000 }, updated_at: '2026-10-21' }],
+                error: null
+              });
+            }
+          }
+          return Promise.resolve({ data: [], error: null });
+        })
+      } as any));
+
+      const report = await storageAuditService.runAudit();
+
+      // All draft assets must be REFERENCED_KEEP
+      const glbItem = report.items.find(i => i.name === 'armchair.glb');
+      expect(glbItem).toBeDefined();
+      expect(glbItem?.classification).toBe('REFERENCED_KEEP');
+
+      const videoItem = report.items.find(i => i.name === 'armchair-joinery.mp4');
+      expect(videoItem).toBeDefined();
+      expect(videoItem?.classification).toBe('REFERENCED_KEEP');
+
+      const stagedVaultItem = report.items.find(i => i.name === 'armchair-staged.glb');
+      expect(stagedVaultItem).toBeDefined();
+      expect(stagedVaultItem?.classification).toBe('REFERENCED_KEEP');
+    });
+  });
+
+  // =========================================================================
+  // 7. Duplicate Detection & Unreferenced Review Candidate Status
+  // =========================================================================
+  describe('Duplicate Detection & Review Candidate Status', () => {
+    it('detects duplicate files by size and notes matching referenced assets', async () => {
+      vi.spyOn(supabaseClientModule, 'checkIsAdmin').mockResolvedValue(true);
+
+      const heroSize = 42273360;
+
+      // Mock DB: site_settings points to hero asset in showroom-videos
+      vi.spyOn(supabase, 'from').mockImplementation((table: string) => ({
+        select: vi.fn().mockImplementation(() => {
+          if (table === 'site_settings') {
+            return Promise.resolve({
+              data: [
+                {
+                  key: 'hero',
+                  value: { mediaUrl: 'https://xyz.supabase.co/storage/v1/object/public/showroom-videos/hero/videos/1792270227821_5nt5cz_villexa-hero.mp4' }
+                }
+              ],
+              error: null
+            });
+          }
+          return Promise.resolve({ data: [], error: null });
+        })
+      } as any));
+
+      // Mock storage: hero video in showroom-videos AND duplicate copy in showroom-videos root
+      vi.spyOn(supabase.storage, 'from').mockImplementation((bucket: string) => ({
+        list: vi.fn().mockImplementation((folder: string) => {
+          if (bucket === 'showroom-videos') {
+            if (folder === '') {
+              return Promise.resolve({
+                data: [
+                  { id: null, name: 'hero', metadata: null },
+                  { id: 'dup-1', name: 'unreferenced_copy_hero.mp4', metadata: { size: heroSize }, updated_at: '2026-10-21' }
+                ],
+                error: null
+              });
+            }
+            if (folder === 'hero') {
+              return Promise.resolve({ data: [{ id: null, name: 'videos', metadata: null }], error: null });
+            }
+            if (folder === 'hero/videos') {
+              return Promise.resolve({
+                data: [
+                  { id: 'hero-1', name: '1792270227821_5nt5cz_villexa-hero.mp4', metadata: { size: heroSize }, updated_at: '2026-10-21' }
+                ],
+                error: null
+              });
+            }
+          }
+          return Promise.resolve({ data: [], error: null });
+        })
+      } as any));
+
+      const report = await storageAuditService.runAudit();
+
+      // Original active hero video
+      const activeHero = report.items.find(i => i.path === 'hero/videos/1792270227821_5nt5cz_villexa-hero.mp4');
+      expect(activeHero).toBeDefined();
+      expect(activeHero?.classification).toBe('REFERENCED_KEEP');
+      expect(activeHero?.duplicateMatches).toBeDefined();
+      expect(activeHero?.duplicateMatches?.length).toBe(1);
+
+      // Duplicate copy
+      const duplicateHero = report.items.find(i => i.name === 'unreferenced_copy_hero.mp4');
+      expect(duplicateHero).toBeDefined();
+      expect(duplicateHero?.classification).toBe('UNREFERENCED_CANDIDATE');
+      expect(duplicateHero?.duplicateMatches).toBeDefined();
+      expect(duplicateHero?.duplicateMatches?.[0].path).toBe('hero/videos/1792270227821_5nt5cz_villexa-hero.mp4');
+      // Must clearly alert that it is a duplicate of a referenced active asset
+      expect(duplicateHero?.reason).toContain('Duplicate match');
+      expect(duplicateHero?.reason).toContain('hero/videos/1792270227821_5nt5cz_villexa-hero.mp4');
+      expect(duplicateHero?.reason).toContain('Review both copies manually');
+    });
+
+    it('marks unreferenced files as Review Candidates with clear cautionary guidance', async () => {
+      vi.spyOn(supabaseClientModule, 'checkIsAdmin').mockResolvedValue(true);
+
+      vi.spyOn(supabase, 'from').mockReturnValue({
+        select: vi.fn().mockResolvedValue({ data: [], error: null })
+      } as any);
+
+      vi.spyOn(supabase.storage, 'from').mockImplementation((bucket: string) => ({
+        list: vi.fn().mockImplementation((folder: string) => {
+          if (bucket === 'product-images' && folder === '') {
+            return Promise.resolve({
+              data: [
+                { id: 'orphan-1', name: 'abandoned-chair.png', metadata: { size: 1048576 }, updated_at: '2026-10-20' }
+              ],
+              error: null
+            });
+          }
+          return Promise.resolve({ data: [], error: null });
+        })
+      } as any));
+
+      const report = await storageAuditService.runAudit();
+
+      const item = report.items.find(i => i.name === 'abandoned-chair.png');
+      expect(item).toBeDefined();
+      expect(item?.classification).toBe('UNREFERENCED_CANDIDATE');
+      expect(item?.reason).toContain('Review Candidate');
+      expect(item?.reason).toContain('Review carefully before deleting');
+    });
+  });
 });
+
