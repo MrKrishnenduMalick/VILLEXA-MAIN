@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Film, Upload, Save, Check, Trash2, AlertCircle, Sparkles, Package } from 'lucide-react';
-import { adminService } from '../../services/adminService';
+import { adminService, extractVaultPathFromUrl } from '../../services/adminService';
 import { siteConfigService } from '../../services/siteConfigService';
 import { uploadAsset, uploadPublicAsset, validateFile } from '../../services/storageService';
 import { HeroConfig } from '../../types/content';
@@ -70,9 +70,9 @@ export const AdminShowroomMedia: React.FC = () => {
         if (prods.length > 0) {
           setSelectedProductId(prods[0].id);
           setProdVideoUrl(prods[0].videoUrl || null);
-          setProdVideoStoragePath(prods[0].videoMedia?.storagePath || null);
+          setProdVideoStoragePath(prods[0].videoMedia?.storagePath || extractVaultPathFromUrl(prods[0].videoUrl) || null);
           setProdPosterUrl(prods[0].videoPosterUrl || null);
-          setProdPosterStoragePath((prods[0].videoMedia?.metadata as any)?.posterStoragePath || null);
+          setProdPosterStoragePath((prods[0].videoMedia?.metadata as any)?.posterStoragePath || extractVaultPathFromUrl(prods[0].videoPosterUrl) || null);
         }
       } finally {
         setIsLoading(false);
@@ -95,9 +95,9 @@ export const AdminShowroomMedia: React.FC = () => {
     setSelectedProductId(prodId);
     const prod = products.find((p) => p.id === prodId);
     setProdVideoUrl(prod?.videoUrl || null);
-    setProdVideoStoragePath(prod?.videoMedia?.storagePath || null);
+    setProdVideoStoragePath(prod?.videoMedia?.storagePath || extractVaultPathFromUrl(prod?.videoUrl) || null);
     setProdPosterUrl(prod?.videoPosterUrl || null);
-    setProdPosterStoragePath((prod?.videoMedia?.metadata as any)?.posterStoragePath || null);
+    setProdPosterStoragePath((prod?.videoMedia?.metadata as any)?.posterStoragePath || extractVaultPathFromUrl(prod?.videoPosterUrl) || null);
     setFeedback(null);
   };
 
@@ -306,10 +306,14 @@ export const AdminShowroomMedia: React.FC = () => {
         sortOrder: prod.sortOrder,
         status: prod.status,
         galleryImages: prod.galleryMedia || prod.galleryImages?.map((url) => ({ url })),
-        glbModel: prod.glbMedia || (prod.glbConfig?.modelUrl ? { url: prod.glbConfig.modelUrl } : null),
+        glbModel: prod.glbMedia ? {
+          url: prod.glbMedia.url,
+          storagePath: prod.glbMedia.storagePath || extractVaultPathFromUrl(prod.glbMedia.url) || undefined,
+          metadata: prod.glbMedia.metadata
+        } : (prod.glbConfig?.modelUrl ? { url: prod.glbConfig.modelUrl, storagePath: extractVaultPathFromUrl(prod.glbConfig.modelUrl) || undefined } : null),
         productVideo: prodVideoUrl ? {
           url: prodVideoUrl,
-          storagePath: prodVideoStoragePath || undefined,
+          storagePath: prodVideoStoragePath || extractVaultPathFromUrl(prodVideoUrl) || undefined,
           posterUrl: prodPosterUrl || undefined,
           metadata: {
             ...(prodPosterStoragePath ? { posterStoragePath: prodPosterStoragePath } : {})
@@ -350,12 +354,13 @@ export const AdminShowroomMedia: React.FC = () => {
     setIsRepairing(true);
     setFeedback(null);
     try {
-      const res = await adminService.repairPublishedProductVideos();
+      const res = await adminService.repairTargetedProductVideos();
       if (res.success) {
         if (res.repaired > 0) {
+          const detailSummary = res.details.map((d) => `• ${d.productName} (${d.type}): ${d.storagePath}`).join('\n');
           setFeedback({
             type: 'success',
-            text: `Safe Recovery Succeeded: ${res.repaired} staged showcase video(s) promoted to showroom-videos bucket with permanent CDN URLs.`
+            text: `Safe Recovery Succeeded: ${res.repaired} staged showcase video(s) promoted to permanent showroom-videos bucket with verified storage paths:\n${detailSummary}`
           });
           const updatedProds = await adminService.getAllProducts();
           setProducts(updatedProds);
@@ -368,13 +373,14 @@ export const AdminShowroomMedia: React.FC = () => {
         } else {
           setFeedback({
             type: 'success',
-            text: 'All published product videos are already correctly promoted to showroom-videos CDN.'
+            text: 'All 3 affected product videos are already correctly promoted to showroom-videos.'
           });
         }
       } else {
+        const errorText = res.errors.length > 0 ? res.errors.join('; ') : 'Unknown recovery error';
         setFeedback({
           type: 'error',
-          text: `Recovery encountered errors: ${res.errors.join('; ')}`
+          text: `Recovery action requires attention: ${errorText}`
         });
       }
     } finally {
@@ -761,10 +767,10 @@ export const AdminShowroomMedia: React.FC = () => {
                   disabled={isRepairing || isSaving}
                   className="btn btn-secondary"
                   style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}
-                  title="Check existing published products and promote any videos remaining in atelier-vault to showroom-videos CDN"
+                  title="Check existing published products and promote any videos or GLB models remaining in atelier-vault to permanent Showroom CDN buckets"
                 >
                   <Sparkles size={14} />
-                  <span>{isRepairing ? 'Scanning & Promoting...' : 'Check & Recover Staged Videos'}</span>
+                  <span>{isRepairing ? 'Scanning & Promoting...' : 'Check & Recover Staged Media'}</span>
                 </button>
               </div>
 

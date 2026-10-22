@@ -12,7 +12,7 @@ import {
   Eye,
   Film
 } from 'lucide-react';
-import { adminService, ProductFormData } from '../../services/adminService';
+import { adminService, ProductFormData, extractVaultPathFromUrl } from '../../services/adminService';
 import { uploadAsset, validateFile } from '../../services/storageService';
 import { ProductCategory, ProductViewerMode } from '../../types/product';
 import { Collection } from '../../types/collection';
@@ -33,6 +33,8 @@ export interface VideoMediaState {
 export interface GlbMediaState {
   url: string;
   storagePath?: string;
+  bucket?: string;
+  objectPath?: string;
   metadata?: Record<string, unknown>;
   isNewDraft?: boolean;
 }
@@ -137,16 +139,19 @@ export const AdminProductEditor: React.FC = () => {
 
           // Initialize 3D model if present
           if (found.glbMedia) {
+            const resolvedStoragePath = found.glbMedia.storagePath || extractVaultPathFromUrl(found.glbMedia.url) || undefined;
             setGlbModel({
               url: found.glbMedia.url,
-              storagePath: found.glbMedia.storagePath,
+              storagePath: resolvedStoragePath,
               metadata: found.glbMedia.metadata,
               isNewDraft: false
             });
             setTimeout(() => mount3DPreview(found.glbMedia!.url), 150);
           } else if (found.glbConfig?.modelUrl) {
+            const resolvedStoragePath = extractVaultPathFromUrl(found.glbConfig.modelUrl) || undefined;
             setGlbModel({
               url: found.glbConfig.modelUrl,
+              storagePath: resolvedStoragePath,
               isNewDraft: false
             });
             setTimeout(() => mount3DPreview(found.glbConfig!.modelUrl), 150);
@@ -154,16 +159,19 @@ export const AdminProductEditor: React.FC = () => {
 
           // Initialize video if present
           if (found.videoMedia) {
+            const resolvedStoragePath = found.videoMedia.storagePath || extractVaultPathFromUrl(found.videoMedia.url) || undefined;
             setProductVideo({
               url: found.videoMedia.url,
-              storagePath: found.videoMedia.storagePath,
+              storagePath: resolvedStoragePath,
               posterUrl: found.videoMedia.posterUrl,
               metadata: found.videoMedia.metadata,
               isNewDraft: false
             });
           } else if (found.videoUrl) {
+            const resolvedStoragePath = extractVaultPathFromUrl(found.videoUrl) || undefined;
             setProductVideo({
               url: found.videoUrl,
+              storagePath: resolvedStoragePath,
               posterUrl: found.videoPosterUrl || undefined,
               isNewDraft: false
             });
@@ -334,7 +342,15 @@ export const AdminProductEditor: React.FC = () => {
         setGlbModel({
           url: res.publicUrl!,
           storagePath: res.storagePath,
-          metadata: res.metadata,
+          bucket: res.bucket,
+          objectPath: res.objectPath,
+          metadata: {
+            ...(res.metadata || {}),
+            bucket: res.bucket,
+            objectPath: res.objectPath,
+            size: file.size,
+            mimeType: file.type || 'model/gltf-binary'
+          },
           isNewDraft: true
         });
         setFormData((prev) => ({ ...prev, preferredViewer: 'glb_3d' }));
@@ -438,6 +454,14 @@ export const AdminProductEditor: React.FC = () => {
             url: res.promotedVideo!.url,
             storagePath: res.promotedVideo!.storagePath,
             posterUrl: res.promotedVideo!.posterUrl || prev.posterUrl,
+            isNewDraft: false
+          } : null);
+        }
+        if (res.promotedGlb) {
+          setGlbModel((prev) => prev ? {
+            ...prev,
+            url: res.promotedGlb!.url,
+            storagePath: res.promotedGlb!.storagePath,
             isNewDraft: false
           } : null);
         }
