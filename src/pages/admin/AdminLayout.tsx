@@ -11,7 +11,8 @@ import {
   ExternalLink,
   ShieldCheck,
   Plus,
-  Layers
+  Layers,
+  HardDrive
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useClientConfig } from '../../context/ClientConfigContext';
@@ -46,6 +47,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { href: '/admin/categories', label: 'Categories', icon: FolderTree },
     { href: '/admin/collections', label: 'Collections', icon: Sparkles },
     { href: '/admin/media', label: 'Videos & Media', icon: Film },
+    { href: '/admin/storage-audit', label: 'Storage Audit & Cleanup', icon: HardDrive },
     { href: '/admin/settings', label: 'Site Settings', icon: Settings },
     { href: '/admin/enquiries', label: 'Enquiries', icon: Inbox }
   ];

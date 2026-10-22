@@ -23,6 +23,7 @@ import { AdminCollections } from './pages/admin/AdminCollections';
 import { AdminShowroomMedia } from './pages/admin/AdminShowroomMedia';
 import { AdminHeroFrames } from './pages/admin/AdminHeroFrames';
 import { AdminSiteSettings } from './pages/admin/AdminSiteSettings';
+import { AdminStorageAudit } from './pages/admin/AdminStorageAudit';
 import { AdminEnquiries } from './pages/admin/AdminEnquiries';
 import { AdminLogin } from './pages/admin/AdminLogin';
 import { CinematicHeroProvider } from './context/CinematicHeroContext';
@@ -142,6 +143,11 @@ export const App: React.FC = () => {
           <Route path="/admin/settings">
             <AdminLayout>
               <AdminSiteSettings />
+            </AdminLayout>
+          </Route>
+          <Route path="/admin/storage-audit">
+            <AdminLayout>
+              <AdminStorageAudit />
             </AdminLayout>
           </Route>
           <Route path="/admin/enquiries">

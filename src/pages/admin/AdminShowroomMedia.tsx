@@ -3,14 +3,25 @@ import { Film, Upload, Save, Check, Trash2, AlertCircle, Sparkles, Package } fro
 import { adminService, extractVaultPathFromUrl } from '../../services/adminService';
 import { siteConfigService } from '../../services/siteConfigService';
 import { uploadAsset, uploadPublicAsset, validateFile } from '../../services/storageService';
-import { HeroConfig } from '../../types/content';
+import { HeroConfig, ShowroomMediaConfig } from '../../types/content';
 import { Collection } from '../../types/collection';
 import { Product } from '../../types/product';
 
-type VideoSection = 'hero' | 'collections' | 'products';
+type VideoSection = 'hero' | 'showroom' | 'collections' | 'products';
 
 export const AdminShowroomMedia: React.FC = () => {
   const [activeSection, setActiveSection] = useState<VideoSection>('hero');
+
+  // 1. Showroom Atmosphere Media State
+  const [showroomMediaConfig, setShowroomMediaConfig] = useState<ShowroomMediaConfig>({
+    enabled: true,
+    sectionTitle: 'Architectural Atmosphere',
+    sectionSubtitle: 'Experience the tactile serenity and presence of the Villexa atelier.',
+    videoUrl: null,
+    posterUrl: null,
+    autoPlay: true,
+    loop: true
+  });
 
   // 2. Homepage Hero Video State
   const [heroConfig, setHeroConfig] = useState<HeroConfig>({
@@ -58,6 +69,9 @@ export const AdminShowroomMedia: React.FC = () => {
         ]);
         if (siteConfig) {
           setHeroConfig(siteConfig.hero);
+          if (siteConfig.showroomMedia) {
+            setShowroomMediaConfig(siteConfig.showroomMedia);
+          }
         }
         setCollections(cols);
         setProducts(prods);
@@ -237,6 +251,87 @@ export const AdminShowroomMedia: React.FC = () => {
         setFeedback({ type: 'success', text: 'Homepage hero video configuration saved!' });
       } else {
         setFeedback({ type: 'error', text: res.error || 'Failed to persist hero settings.' });
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Dedicated Showroom Atmosphere Video upload via public showroom storage
+  const handleUploadShowroomVideo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFeedback(null);
+    const valid = validateFile(file, 'video');
+    if (!valid.valid) {
+      setFeedback({ type: 'error', text: valid.error || 'Invalid video file (must be MP4 or WebM under 100MB).' });
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadStatus(`Uploading "${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)}MB) to Showroom CDN...`);
+    try {
+      const res = await uploadPublicAsset(file, 'video', 'showroom/videos');
+      if (res.success && res.publicUrl) {
+        setShowroomMediaConfig((prev) => ({
+          ...prev,
+          videoUrl: res.publicUrl!
+        }));
+        setFeedback({
+          type: 'success',
+          text: `Showroom atmosphere video "${file.name}" uploaded successfully! Click "Save Showroom Atmosphere Configuration" below to persist.`
+        });
+      } else {
+        setFeedback({ type: 'error', text: res.error || 'Failed to upload showroom atmosphere video.' });
+      }
+    } finally {
+      setIsUploading(false);
+      setUploadStatus('');
+    }
+  };
+
+  // Dedicated Showroom Atmosphere Poster upload via public showroom storage
+  const handleUploadShowroomPoster = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFeedback(null);
+    const valid = validateFile(file, 'image');
+    if (!valid.valid) {
+      setFeedback({ type: 'error', text: valid.error || 'Invalid image file for showroom poster.' });
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadStatus(`Uploading showroom atmosphere poster thumbnail (${(file.size / (1024 * 1024)).toFixed(1)}MB)...`);
+    try {
+      const res = await uploadPublicAsset(file, 'image', 'showroom/posters');
+      if (res.success && res.publicUrl) {
+        setShowroomMediaConfig((prev) => ({
+          ...prev,
+          posterUrl: res.publicUrl!
+        }));
+        setFeedback({ type: 'success', text: 'Showroom atmosphere poster thumbnail uploaded and attached successfully!' });
+      } else {
+        setFeedback({ type: 'error', text: res.error || 'Failed to upload showroom poster.' });
+      }
+    } finally {
+      setIsUploading(false);
+      setUploadStatus('');
+    }
+  };
+
+  // Save: Showroom Atmosphere Video
+  const handleSaveShowroomMedia = async () => {
+    setIsSaving(true);
+    setFeedback(null);
+    try {
+      const res = await adminService.saveSiteSettings('showroom_media', showroomMediaConfig);
+      if (res.success) {
+        setFeedback({ type: 'success', text: 'Showroom atmosphere video configuration saved to site settings!' });
+      } else {
+        setFeedback({ type: 'error', text: res.error || 'Failed to persist showroom atmosphere settings.' });
       }
     } finally {
       setIsSaving(false);
@@ -442,6 +537,23 @@ export const AdminShowroomMedia: React.FC = () => {
           Homepage Hero Video
         </button>
         <button
+          onClick={() => { setActiveSection('showroom'); setFeedback(null); }}
+          style={{
+            padding: 'var(--space-3) var(--space-4)',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+            fontWeight: activeSection === 'showroom' ? 600 : 400,
+            color: activeSection === 'showroom' ? '#856404' : 'var(--color-text-secondary)',
+            borderBottom: activeSection === 'showroom' ? '2px solid var(--color-accent-gold)' : '2px solid transparent'
+          }}
+        >
+          Showroom Atmosphere Video
+        </button>
+        <button
           onClick={() => { setActiveSection('collections'); setFeedback(null); }}
           style={{
             padding: 'var(--space-3) var(--space-4)',
@@ -635,6 +747,212 @@ export const AdminShowroomMedia: React.FC = () => {
                     <span>Preview Public Showroom</span>
                   </a>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* SHOWROOM ATMOSPHERE VIDEO (site_settings.showroom_media) */}
+          {activeSection === 'showroom' && (
+            <div className="luxury-card" style={{ padding: 'var(--space-8)', maxWidth: '900px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 'var(--space-6)', flexWrap: 'wrap', gap: 'var(--space-4)' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: '4px' }}>
+                    <h3 style={{ fontSize: '1.25rem' }}>Showroom Atmosphere Video</h3>
+                    <span
+                      className={`badge ${showroomMediaConfig.enabled && showroomMediaConfig.videoUrl ? 'badge-gold' : ''}`}
+                      style={{ fontSize: '0.65rem' }}
+                    >
+                      {showroomMediaConfig.enabled ? 'Enabled' : 'Disabled'}
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)', maxWidth: '640px', lineHeight: 1.6 }}>
+                    Configure the architectural atelier atmosphere video shown in the showroom media experience. Stored in <code>site_settings.showroom_media</code>.
+                  </p>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.85rem', padding: '6px 12px', background: 'var(--color-bg-secondary)', border: '1px solid var(--color-border-subtle)' }}>
+                  <input
+                    type="checkbox"
+                    checked={showroomMediaConfig.enabled}
+                    onChange={(e) => setShowroomMediaConfig({ ...showroomMediaConfig, enabled: e.target.checked })}
+                  />
+                  <span>Enable Atmosphere Section</span>
+                </label>
+              </div>
+
+              {/* Expired Staging URL Warning */}
+              {Boolean(
+                showroomMediaConfig.videoUrl &&
+                (showroomMediaConfig.videoUrl.includes('atelier-vault') || showroomMediaConfig.videoUrl.includes('token='))
+              ) && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--space-3)',
+                  padding: 'var(--space-4)',
+                  marginBottom: 'var(--space-5)',
+                  backgroundColor: 'rgba(212, 175, 55, 0.08)',
+                  border: '1px solid rgba(212, 175, 55, 0.4)',
+                  borderRadius: 'var(--radius-sm)'
+                }}>
+                  <AlertCircle size={18} color="var(--color-accent-gold)" />
+                  <div>
+                    <p style={{ fontSize: '0.85rem', fontWeight: 600, margin: 0, color: 'var(--color-text-primary)' }}>
+                      Expired Staging Vault Reference Detected
+                    </p>
+                    <p style={{ fontSize: '0.75rem', margin: '2px 0 0', color: 'var(--color-text-muted)' }}>
+                      The current atmosphere video URL points to an expiring token in the private vault. Please upload a fresh video file or enter a permanent Showroom CDN URL below.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Video Player Preview */}
+              {showroomMediaConfig.videoUrl ? (
+                <div style={{ marginBottom: 'var(--space-6)' }}>
+                  <video
+                    src={showroomMediaConfig.videoUrl}
+                    poster={showroomMediaConfig.posterUrl || undefined}
+                    controls
+                    playsInline
+                    style={{ width: '100%', maxHeight: '420px', backgroundColor: '#000', border: '1px solid var(--color-border-subtle)' }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-2)' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>
+                      {showroomMediaConfig.videoUrl}
+                    </span>
+                    <button
+                      onClick={() => setShowroomMediaConfig((prev) => ({ ...prev, videoUrl: null, posterUrl: null }))}
+                      className="btn"
+                      style={{ fontSize: '0.75rem', color: 'var(--color-status-danger)', padding: '2px 8px' }}
+                    >
+                      <Trash2 size={12} />
+                      <span>Detach Video</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{
+                  padding: 'var(--space-8)',
+                  textAlign: 'center',
+                  border: '1px dashed var(--color-border-subtle)',
+                  marginBottom: 'var(--space-6)',
+                  backgroundColor: 'var(--color-bg-secondary)'
+                }}>
+                  <Film size={32} style={{ margin: '0 auto var(--space-3)', color: 'var(--color-text-muted)' }} />
+                  <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                    No showroom atmosphere video attached. Upload an MP4/WebM video below or paste a permanent Showroom CDN URL.
+                  </p>
+                </div>
+              )}
+
+              {/* Text Fields */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px' }}>
+                    Section Title
+                  </label>
+                  <input
+                    type="text"
+                    value={showroomMediaConfig.sectionTitle}
+                    onChange={(e) => setShowroomMediaConfig({ ...showroomMediaConfig, sectionTitle: e.target.value })}
+                    style={{ width: '100%', padding: '0.65rem', border: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-primary)', fontSize: '0.85rem' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px' }}>
+                    Section Subtitle
+                  </label>
+                  <input
+                    type="text"
+                    value={showroomMediaConfig.sectionSubtitle}
+                    onChange={(e) => setShowroomMediaConfig({ ...showroomMediaConfig, sectionSubtitle: e.target.value })}
+                    style={{ width: '100%', padding: '0.65rem', border: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-primary)', fontSize: '0.85rem' }}
+                  />
+                </div>
+              </div>
+
+              {/* URL Overrides */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-6)' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px' }}>
+                    Permanent Video URL (CDN)
+                  </label>
+                  <input
+                    type="url"
+                    value={showroomMediaConfig.videoUrl || ''}
+                    onChange={(e) => setShowroomMediaConfig({ ...showroomMediaConfig, videoUrl: e.target.value || null })}
+                    placeholder="https://.../showroom-videos/showroom/videos/..."
+                    style={{ width: '100%', padding: '0.65rem', border: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-primary)', fontSize: '0.82rem', fontFamily: 'monospace' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px' }}>
+                    Poster Image URL (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={showroomMediaConfig.posterUrl || ''}
+                    onChange={(e) => setShowroomMediaConfig({ ...showroomMediaConfig, posterUrl: e.target.value || null })}
+                    placeholder="https://.../showroom-videos/showroom/posters/..."
+                    style={{ width: '100%', padding: '0.65rem', border: '1px solid var(--color-border-subtle)', background: 'var(--color-bg-primary)', fontSize: '0.82rem', fontFamily: 'monospace' }}
+                  />
+                </div>
+              </div>
+
+              {/* Upload Controls */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-4)', marginBottom: 'var(--space-8)' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px' }}>
+                    Upload New Atmosphere Video
+                  </label>
+                  <label className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', cursor: isUploading ? 'not-allowed' : 'pointer' }}>
+                    <Upload size={14} />
+                    <span>{isUploading ? 'Uploading Video...' : 'Choose Video File (Max 100MB)'}</span>
+                    <input
+                      type="file"
+                      accept="video/mp4,video/webm"
+                      disabled={isUploading}
+                      onChange={handleUploadShowroomVideo}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                  <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                    Uploaded directly to permanent <code>showroom-videos/showroom/videos/</code> CDN.
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px' }}>
+                    Upload Poster Thumbnail (Optional)
+                  </label>
+                  <label className="btn btn-secondary" style={{ width: '100%', justifyContent: 'center', cursor: isUploading ? 'not-allowed' : 'pointer' }}>
+                    <Upload size={14} />
+                    <span>{isUploading ? 'Uploading Poster...' : 'Choose Poster Image (Max 15MB)'}</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      disabled={isUploading}
+                      onChange={handleUploadShowroomPoster}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                  <span style={{ display: 'block', fontSize: '0.7rem', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                    Uploaded to <code>showroom-videos/showroom/posters/</code> CDN.
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
+                <button
+                  onClick={handleSaveShowroomMedia}
+                  disabled={isSaving || isUploading}
+                  className="btn btn-primary"
+                  style={{ padding: '0.75rem 1.75rem' }}
+                >
+                  <Save size={14} />
+                  <span>{isSaving ? 'Saving Settings...' : 'Save Showroom Atmosphere Configuration'}</span>
+                </button>
               </div>
             </div>
           )}
